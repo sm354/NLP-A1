@@ -1,0 +1,6 @@
+*.DS_Store
+*.py[cod]
+**/__pycache__
+*.ipynb_checkpoints
+assignment_1_data
+COL772_Assignment1_StarterCode.ipynb
