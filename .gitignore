@@ -2,5 +2,6 @@
 *.py[cod]
 **/__pycache__
 *.ipynb_checkpoints
+data
 assignment_1_data
 COL772_Assignment1_StarterCode.ipynb

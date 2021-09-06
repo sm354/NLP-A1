@@ -3,7 +3,16 @@ COL772 A1 - Shubham Mittal 2018EE10957
 
 Rule-based system
 -----------------
-    
+
+    How to make such a system?
+    --------------------------
+        find out the categories that need conversion
+        analyse the pattern by training the human neural network with some examples from given dataset
+        write the rule corresponding to the pattern
+
+    Rules
+    -----
+    silent tokens (sil)
 
     abbreviations
         All abbreviations are separated as they are spoken. Example, “U.S.” or “US” is converted to “u s”
@@ -40,6 +49,7 @@ Appendix
 
 import argparse
 import json
+import re
 import subprocess # remove this line before final submission
 
 # parse arguments
@@ -48,20 +58,32 @@ def add_args(parser):
     parser.add_argument('--solution_path', default='assignment_1_data/prediction.json', type=str, help='Path to solution file')
     return parser
 
-# rule-based system for converting each sentence/input-tokens
+# rule-based system for converting each input-token (in a sentence/input tokens)
+def findOT(inp_tok, rules):
+    # if any of the rules doesn't apply then apply <self> token
+    out_tok = '<self>'
+
+    for rule in rules:
+        out_tok = rule(inp_tok)
+        
+        if out_tok != None:
+            break
+    
+    return '<self>' if out_tok == None else out_tok
+
+# create solution for provided input tokens
 def solution(input_tokens):
+    output_tokens = []
 
+    rules = [sil, abbreviation, ]
 
+    for input_token in input_tokens:
+        output_token = findOT(input_token, rules)
+        output_tokens.append(output_token)
 
-
-
-
-
-
-
-
-
-    return ['<self>']*len(input_tokens) #todo: write your own solution
+    assert len(output_tokens) == len(input_tokens)
+    # return ['<self>']*len(input_tokens) #todo: write your own solution
+    return output_tokens
 
 # make solution using input sentences
 def solution_dump(args):
@@ -83,6 +105,46 @@ def solution_dump(args):
         json.dump(solution_data, solution_file, indent=2, ensure_ascii=False)
         solution_file.close()
 
+def sil(string):
+    regex = r"^\W$"
+    return None if re.match(regex, string) == None else "sil"
+
+def abbreviation(string):
+    regex = r"([A-Z](\.)?(\s)*)+" # this regex includes the roman numerals as well => precision would be high (FP would be high)
+    match = re.fullmatch(regex, string)
+
+    if match == None:
+        return None
+    
+    # split the string about [^A-Z] into lower case characters
+    split_str = re.split(r'[^A-Z]+', match.group())
+    split_str = ''.join(split_str).strip().lower()
+    # now we have got the letters, just insert spaces in between them
+    out = ""
+    for ch in split_str:
+        out += ch
+        out += " "
+    return out.strip()
+
+def dates2words(string):
+
+    pass
+
+def time2words(string):
+
+    pass
+
+def num2words(string):
+
+    pass
+
+def units2words(string):
+
+    pass
+
+def currency2words(string):
+
+    pass
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')
@@ -95,6 +157,14 @@ if __name__ == "__main__":
         --solution_path " + args.solution_path, shell=True) # remove this line before final submission
 
 
+'''
+References
+----------
+Regular expressions
+    https://www.geeksforgeeks.org/regular-expression-python-examples-set-1/
+    https://www.geeksforgeeks.org/regular-expressions-python-set-1-search-match-find/
 
+
+'''
 
 
