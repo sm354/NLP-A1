@@ -56,6 +56,7 @@ import subprocess # remove this line before final submission
 def add_args(parser):
     parser.add_argument('--input_path', default='assignment_1_data/input.json', type=str, help='Path to input file')
     parser.add_argument('--solution_path', default='assignment_1_data/prediction.json', type=str, help='Path to solution file')
+    parser.add_argument('--debug', action='store_true', help='print the wrong predictions along with input and gold output')
     return parser
 
 # rule-based system for converting each input-token (in a sentence/input tokens)
@@ -153,8 +154,13 @@ if __name__ == "__main__":
 
     solution_dump(args)
 
-    subprocess.call("python run_checker.py --ground_truth_path assignment_1_data/output.json \
-        --solution_path " + args.solution_path, shell=True) # remove this line before final submission
+    # remove the following lines before final submission
+    python_cmd = "python run_checker.py --ground_truth_path assignment_1_data/output.json \
+        --solution_path " + args.solution_path 
+    if args.debug:
+        python_cmd += " --debug"
+    
+    subprocess.call(python_cmd, shell=True) 
 
 
 '''
@@ -163,7 +169,7 @@ References
 Regular expressions
     https://www.geeksforgeeks.org/regular-expression-python-examples-set-1/
     https://www.geeksforgeeks.org/regular-expressions-python-set-1-search-match-find/
-
+    https://docs.python.org/3/library/re.html
 
 '''
 
