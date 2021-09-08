@@ -105,8 +105,7 @@ def dates2words(string):
         March 2011 march twenty eleven; September 2008 september two thousand eight
         14 June 2014 the fourteenth of june twenty fourteen
         January 14, 2008 january fourteenth two thousand eight; May 29, 2013 may twenty ninth twenty thirteen; November 20, 2013
-        2011-01-25
-
+        2008-01-08 the eighth of january two thousand eight
     '''
     # check if it is date or not by checking presence of year
     regex = r"[1-2]\d{3}"
@@ -130,6 +129,19 @@ def dates2words(string):
     match = re.fullmatch(regex, string)
     if match != None:
         return "the " + _convertday(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
+    
+    # date_month_year
+    regex = r"([A-Za-z]+) (\d{1,2}),? ([1-2]\d{3})"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return match.group(1).lower() + " " + _convertday(match.group(2)) + " " + _convertyear(match.group(3))
+
+    # 2008-01-21
+    regex = r"(\d{4})-(\d{2})-(\d{2})"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        print(string)
+        return "the " + _convertday(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
     
     return None
 
@@ -336,9 +348,16 @@ def _make_vocab():
     for i in range(1,21):
         _ordinals[i] = _list[i-1]
 
+    global _months
+    _months = {}
+    _list = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+    for i in range(1,13):
+        _months[i] = _list[i-1]
+
     # print(_num2word)
     # print(_placeValue)
     # print(_ordinals)
+    # print(_months)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')
