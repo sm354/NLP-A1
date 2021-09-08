@@ -44,7 +44,10 @@ def calculateF1(args):
                     if args.debug:
                         debug_flag = True
                     rec_den += 1.0
-            
+                else:
+                    prec_den += 1.0
+                    rec_den += 1.0
+
             # case 4
             elif true_tok=="sil" or true_tok=="<self>":
                 if pred_tok != true_tok:

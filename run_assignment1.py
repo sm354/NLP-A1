@@ -101,9 +101,17 @@ def dates2words(string):
     '''
     possible formats
     ----------------
-        29 March 2012
         2011-01-25
-        March 1921
+        March 2011 march twenty eleven
+        14 June 2014 the fourteenth of june twenty fourteen
+        2006 two thousand six
+        January 14, 2008 january fourteenth two thousand eight
+        1984 nineteen eighty four
+        1878 eighteen seventy eight
+        1201 twelve o one
+        1200 twelve hundred
+        1806 eighteen o six
+        2000 two thousand
     '''
     # first find year
     regex_year = r"[1-2]\d{3}"
@@ -146,13 +154,17 @@ def num2words(string):
             978-0-304-35252-4 nine seven eight sil o sil three o four sil three five two five two sil four
             1-881089-97-5 one sil eight eight one o eight nine sil nine seven sil five
             0-8387-1972-4 o sil eight three eight seven sil one nine seven two sil four
+
+        EDGE-CASE:
+            106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
+            0 7506 0625 8 o sil seven five o six sil o six two five sil eight
     '''
-    regex_num = r"(-?)\d+"
-    match = re.fullmatch(regex_num, string)
-    if match != None:
-        return _number_to_word(match.group())
+    # regex_num = r"(-?)\d+"
+    # match = re.fullmatch(regex_num, string)
+    # if match != None:
+    #     return _number_to_word(match.group())
     
-    regex_comma_num = r"(-?)((,?)\d{1,3})+" # this includes some false weird examples also like '90,0', ',123,1,1', etc
+    regex_comma_num = r"(-?)((,?)\d{1,3})+" # this includes some false weird examples also like '90,0', ',123,1,1', etc BUT it also includes all the numbers
     match = re.fullmatch(regex_comma_num, string)
     if match != None:
         return _number_to_word(''.join(match.group().split(',')))
