@@ -101,30 +101,70 @@ def dates2words(string):
     '''
     possible formats
     ----------------
-        2011-01-25
-        March 2011 march twenty eleven
+        2000 two thousand; 2006 two thousand six; 1984 nineteen eighty four; 1201 twelve o one; 1200 twelve hundred
+        March 2011 march twenty eleven; September 2008 september two thousand eight
         14 June 2014 the fourteenth of june twenty fourteen
-        2006 two thousand six
-        January 14, 2008 january fourteenth two thousand eight
-        1984 nineteen eighty four
-        1878 eighteen seventy eight
-        1201 twelve o one
-        1200 twelve hundred
-        1806 eighteen o six
-        2000 two thousand
+        January 14, 2008 january fourteenth two thousand eight; May 29, 2013 may twenty ninth twenty thirteen; November 20, 2013
+        2011-01-25
+
     '''
-    # first find year
-    regex_year = r"[1-2]\d{3}"
-    match = re.search(regex_year, string)
-    
+    # check if it is date or not by checking presence of year
+    regex = r"[1-2]\d{3}"
+    match = re.search(regex, string)
     if match == None:
         return None
-    out = ""
+
+    # only year
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return _convertyear(match.group()) 
     
-    year = match.group()
-    # 1921 -> nineteen twenty one
+    # month_year
+    regex = r"([A-Za-z]+) ([1-2]\d{3})"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return match.group(1).lower() + " " + _convertyear(match.group(2))
     
-    return out
+    # date_month_year
+    regex = r"(\d{1,2}) ([A-Za-z]+) ([1-2]\d{3})"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return "the " + _convertday(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
+    
+    return None
+
+def _convertyear(year):
+    if int(year)%1000 == 0:
+        return _number_to_word(year[0]) + " thousand"
+    
+    if 2000 < int(year) < 2009:
+        return "two thousand " + _number_to_word(year[-1])
+    
+    if 2010 <= int(year) < 2100:
+        return "twenty " + _number_to_word(year[2:])
+    
+    if 1100 <= int(year) < 2000:
+        word = _number_to_word(year[:2])
+        if int(year[2:]) == 0:
+            word += " hundred"
+        elif 0 < int(year[2:]) < 10:
+            word += (" o " + _number_to_word(year[-1]))
+        else:
+            word = word + ' ' + _number_to_word(year[2:])
+        return word
+
+def _convertday(day):
+    '''
+    get ordinals uptill 99
+    '''
+    if 0 < int(day) <= 20:
+        return _ordinals[int(day)]
+    
+    if int(day)%10 == 0:
+        return _number_to_word(day)[:-1] + "ieth" # remove 'y'
+    
+    if 20 < int(day) < 100:
+        return _number_to_word(day[0]+'0') + " " + _ordinals[int(day[1])]
 
 def time2words(string):
 
@@ -288,9 +328,17 @@ def _make_vocab():
     _list = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion']
     for i in range(len(_list)):
         _placeValue[i] = _list[i]
-        
+    
+    global _ordinals
+    _ordinals = {}
+    _list = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
+    _list+= ["eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"]
+    for i in range(1,21):
+        _ordinals[i] = _list[i-1]
+
     # print(_num2word)
     # print(_placeValue)
+    # print(_ordinals)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')
