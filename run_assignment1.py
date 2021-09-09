@@ -121,20 +121,23 @@ def dates2words(string):
         return _convertyear(match.group()) 
     
     # month_year
-    regex = r"([A-Za-z]+) ([1-2]\d{3})"
-    match = re.fullmatch(regex, string)
+    # regex = r"([A-Za-z]+) ([1-2]\d{3})"
+    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) ([1-2]\d{3})"
+    match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
         return match.group(1).lower() + " " + _convertyear(match.group(2))
     
     # date_month_year
-    regex = r"(\d{1,2}) ([A-Za-z]+) ([1-2]\d{3})"
-    match = re.fullmatch(regex, string)
+    # regex = r"(\d{1,2}) ([A-Za-z]+) ([1-2]\d{3})"
+    regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december) ([1-2]\d{3})"
+    match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
         return "the " + _convertday(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
     
     # date_month_year
-    regex = r"([A-Za-z]+) (\d{1,2}),? ([1-2]\d{3})"
-    match = re.fullmatch(regex, string)
+    # regex = r"([A-Za-z]+) (\d{1,2}),? ([1-2]\d{3})"
+    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) (\d{1,2}),? ([1-2]\d{3})"
+    match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
         return match.group(1).lower() + " " + _convertday(match.group(2)) + " " + _convertyear(match.group(3))
 
