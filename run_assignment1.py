@@ -53,10 +53,12 @@ def solution_dump(args):
 def solution(input_tokens):
     output_tokens = []
 
+    # define the rules for the patterns observed in the given data
+    # this order also denotes the priority given i.e. higher to lower priority as we move from left to right ||| important, for ex., when token is year (2012) and not number
     rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
 
     for input_token in input_tokens:
-        output_token = findOT(input_token, rules)
+        output_token = find_output_token(input_token, rules)
         output_tokens.append(output_token)
 
     assert len(output_tokens) == len(input_tokens)
@@ -64,24 +66,22 @@ def solution(input_tokens):
     return output_tokens
 
 # rule-based system for converting each input-token (in a sentence/input tokens)
-def findOT(inp_tok, rules):
+def find_output_token(inp_tok, rules):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
-
     for rule in rules:
         out_tok = rule(inp_tok)
-        
         if out_tok != None:
             break
-    
     return '<self>' if out_tok == None else out_tok
 
+# defined list of rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
 def sil(string):
     regex = r"^\W$"
     return None if re.match(regex, string) == None else "sil"
 
 def abbreviation(string):
-    regex = r"([A-Z](\.)?(\s)*)+" # this regex includes the roman numerals as well => precision would be high (FP would be high)
+    regex = r"([A-Z](\.)?(\s)*)+(-?)" # this regex includes the roman numerals as well => precision would be high (FP would be high) # (-?) added for cases like "USA-"
     match = re.fullmatch(regex, string)
 
     if match == None:
@@ -447,10 +447,3 @@ if __name__ == "__main__":
         python_cmd += " --debug"
     
     subprocess.call(python_cmd, shell=True) 
-
-
-'''
-References
-----------
-
-'''
