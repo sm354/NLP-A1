@@ -10,7 +10,7 @@ Rule-based system
         analyse the pattern by training the human neural network with some examples from given dataset
         write the rule corresponding to the pattern
 
-    Rules
+    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
     -----
     silent tokens (sil)
 
@@ -28,33 +28,6 @@ def add_args(parser):
     parser.add_argument('--solution_path', default='assignment_1_data/prediction.json', type=str, help='Path to solution file')
     parser.add_argument('--debug', action='store_true', help='print the wrong predictions along with input and gold output')
     return parser
-
-# rule-based system for converting each input-token (in a sentence/input tokens)
-def findOT(inp_tok, rules):
-    # if any of the rules doesn't apply then apply <self> token
-    out_tok = '<self>'
-
-    for rule in rules:
-        out_tok = rule(inp_tok)
-        
-        if out_tok != None:
-            break
-    
-    return '<self>' if out_tok == None else out_tok
-
-# create solution for provided input tokens
-def solution(input_tokens):
-    output_tokens = []
-
-    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
-
-    for input_token in input_tokens:
-        output_token = findOT(input_token, rules)
-        output_tokens.append(output_token)
-
-    assert len(output_tokens) == len(input_tokens)
-    # return ['<self>']*len(input_tokens) #todo: write your own solution
-    return output_tokens
 
 # make solution using input sentences
 def solution_dump(args):
@@ -75,6 +48,35 @@ def solution_dump(args):
     with open(args.solution_path,'w') as solution_file:
         json.dump(solution_data, solution_file, indent=2, ensure_ascii=False)
         solution_file.close()
+
+# create solution for provided input tokens
+def solution(input_tokens):
+    output_tokens = []
+
+    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
+
+    for input_token in input_tokens:
+        output_token = findOT(input_token, rules)
+        output_tokens.append(output_token)
+
+    assert len(output_tokens) == len(input_tokens)
+    # return ['<self>']*len(input_tokens) #todo: write your own solution
+    return output_tokens
+
+# rule-based system for converting each input-token (in a sentence/input tokens)
+def findOT(inp_tok, rules):
+    # if any of the rules doesn't apply then apply <self> token
+    out_tok = '<self>'
+
+    for rule in rules:
+        out_tok = rule(inp_tok)
+        
+        if out_tok != None:
+            break
+    
+    return '<self>' if out_tok == None else out_tok
+
+
 
 def sil(string):
     regex = r"^\W$"
@@ -140,7 +142,6 @@ def dates2words(string):
     regex = r"(\d{4})-(\d{2})-(\d{2})"
     match = re.fullmatch(regex, string)
     if match != None:
-        print(string)
         return "the " + _convertday(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
     
     return None
@@ -179,8 +180,63 @@ def _convertday(day):
         return _number_to_word(day[0]+'0') + " " + _ordinals[int(day[1])]
 
 def time2words(string):
+    '''
+    possible formats
+    ----------------
+        NOT strictly time but Numbers --> there is no "hours", "minutes", "seconds" in the output tokens
+            9:30 nine thirty; 1:54 one fifty four; 20: 43 twenty forty three ||| 11:00am eleven a m; 7:00 p.m. seven p m; 5:10PM; 5:00 PM; 9:00 AM
+            two cases:
+                am, pm is given --> 12:00pm, 11:02am, etc 
+                am, pm not given --> 9:30, 20: 43, 11:00, 21:00; (21:00, twenty one hundred), (11:00, eleven o'clock), (00:00, zero hundred)
+        Time format --> only one example found in data 
+            2:27:07 two hours twenty seven minutes and seven seconds
 
-    pass
+    '''
+    # NOT strictly time but Numbers
+    regex = r"(\d{1,2}\s*):(\s*\d{1,2})(\s*[PpAa]\.?[Mm]\.?)?" # allowing too many white space as such errors may come in data
+    match = re.fullmatch(regex, string)
+    if match != None:
+        if match.group(3) != None:
+            num1 = _number_to_word(match.group(1).strip())
+            num2 = _number_to_word(match.group(2).strip()) 
+            num1 = num1 + " " + num2 if num2 != "zero" else num1
+            num1+= (" " + abbreviation(match.group(3).strip().upper())) # pass upper case PM, AM, P.M., etc to abbreviation
+            return num1
+
+        num1 = _number_to_word(match.group(1).strip())
+        num2 = _number_to_word(match.group(2).strip())         
+        if num1 == "zero" and num2 != "zero":
+            # TO DO --------------------------------------- REMAINING
+            return None
+        if num2 == "zero":
+            if 0 < int(match.group(1).strip()) < 12:
+                return num1 + "o'clock"
+            return num1 + "hundred"
+        return num1 + " " + num2
+    
+    # Time format
+    regex = r"(\s*\d{1,2}\s*):(\s*\d{1,2}\s*):(\s*\d{1,2}\s*)" # allowing too many white space as such errors may come in data
+    match = re.fullmatch(regex, string)
+    if match != None:
+        num = ""
+        num1 = _number_to_word(match.group(1).strip())
+        num2 = _number_to_word(match.group(2).strip()) 
+        num3 = _number_to_word(match.group(3).strip()) 
+        
+        zero_time = True
+        if num1 != "zero":
+            num += (num1 + " hours ")
+            zero_time = False
+        if num2 != "zero":
+            num += (num2 + " minutes ")
+            zero_time = False
+        if zero_time:
+            num = num3 + "seconds"
+        else:
+            num += ("and " + num3 + " seconds")
+        return num
+
+    return None
 
 def num2words(string):
     '''
@@ -202,10 +258,12 @@ def num2words(string):
         frac_num    
             7/283 : seven two hundred eighty thirds
             1 1/2 one and a half
+            -3/5 minus three fifths
         hyp_num
             978-0-304-35252-4 nine seven eight sil o sil three o four sil three five two five two sil four
             1-881089-97-5 one sil eight eight one o eight nine sil nine seven sil five
             0-8387-1972-4 o sil eight three eight seven sil one nine seven two sil four
+        ordinals 
 
         EDGE-CASE:
             106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
@@ -228,6 +286,9 @@ def num2words(string):
     match = re.fullmatch(regex_hyp_num, string)
     if match != None:
         return _hyphen_num_to_word(match.group())
+
+    regex_ordinals = r"\d+(st|nd|rd|th)"
+    match = re.fullmatch(regex_ordinals, string)
 
     return None
 
