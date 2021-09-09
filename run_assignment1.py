@@ -231,19 +231,19 @@ def num2words(string):
     '''
     possible formats
     ----------------
-        num
+        num, comma_num, dec_perc_num
             123141512, 0, 199, -123
-        comma_num
             12,000 twelve thousand
-        dec_perc_num
             123.123
             90.0 ninety point zero
             0.63% zero point six three percent
             99.05% ninety nine point o five percent
             0.32% zero point three two percent
-            IMPORTANT ------- 1,565.0 one thousand five hundred sixty five point zero
+            1,565.0 one thousand five hundred sixty five point zero
             25.520 twenty five point five two o
             13.0088 thirteen point o o eight eight
+            102.1 one hundred two point one
+            NOT considering cases like .12%, .12 etc
         frac_num    
             7/283 : seven two hundred eighty thirds
             1 1/2 one and a half
@@ -253,24 +253,56 @@ def num2words(string):
             1-881089-97-5 one sil eight eight one o eight nine sil nine seven sil five
             0-8387-1972-4 o sil eight three eight seven sil one nine seven two sil four
         ordinals 
-
+            1st, 2nd, etc
+        
         EDGE-CASE:
             106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
             0 7506 0625 8 o sil seven five o six sil o six two five sil eight
     '''
+    regex = r"(((\d+)(,?))+)(\.?)(\d*)(\s*%?)" # regex for num, comma_num, dec_perc_num
+    match = re.fullmatch(regex, string)
+    if match != None:
+        num_string = match.group()
+        
+        # remove the commas
+        num_string = ''.join(num_string.split(','))
+        
+        # check percentage
+        isPercentage = True if '%' in num_string else False
+        num_string = num_string[:-1].strip() if isPercentage else num_string # stripping because there could be spaces before percentage
+        
+        # check decimal
+        num_string = num_string.split('.')
+        if len(num_string) == 1: # no decimal
+            num_string = _number_to_word(num_string[0])
+        else:
+            num1 = _number_to_word(num_string[0])
+            num1 += " point"
+            num2 = num_string[1]
+            if len(num2) != 0 and int(num2) == 0:
+                num_0s = ['zero']*len(num2)
+                num1 += (" " + ' '.join(num_0s))
+            elif len(num2) != 0 and int(num2) > 0:
+                num2 = _hyphen_num_to_word(num2)
+                num1 += (" " + num2 )
+            num_string = num1
+
+        return num_string + " percent" if isPercentage else num_string
+    # -----
     # regex_num = r"(-?)\d+"
     # match = re.fullmatch(regex_num, string)
     # if match != None:
     #     return _number_to_word(match.group())
     
-    regex_comma_num = r"(-?)((,?)\d{1,3})+" # this includes some false weird examples also like '90,0', ',123,1,1', etc BUT it also includes all the numbers
-    match = re.fullmatch(regex_comma_num, string)
-    if match != None:
-        return _number_to_word(''.join(match.group().split(',')))
+    # regex_comma_num = r"(-?)((,?)\d{1,3})+" # this includes some false weird examples also like '90,0', ',123,1,1', etc BUT it also includes all the numbers
+    # match = re.fullmatch(regex_comma_num, string)
+    # if match != None:
+    #     return _number_to_word(''.join(match.group().split(',')))
 
     # regex_dec_perc = r"(-?)(\d*)(\.)(\d)" # this includes some false weird examples also like '90,0', ',123,1,1', etc
     # match = re.fullmatch(regex_dec_perc, string)
-    
+    # -----
+
     regex_hyp_num = r"(\d+-)+(\d+)" # this includes dates also -- NEED TO FIX THIS IMPORTANT!
     match = re.fullmatch(regex_hyp_num, string)
     if match != None:
@@ -381,16 +413,32 @@ def _hyphen_num_to_word(hyph_num):
             final_word.append('sil') 
         elif ch == '0':
             final_word.append('o')
-        else:
+        elif '0' < ch <= '9':
             final_word.append(_num2word[int(ch)])
     return ' '.join(final_word)
 
 def units2words(string):
-
-    pass
+    '''
+    possible formats
+    ----------------
+        1,908 mi one thousand nine hundred eight miles
+        3,070 km three thousand seventy kilometers
+        219.4/km2 two hundred nineteen point four per square kilometers; 14.6 km2 fourteen point six square kilometers
+        15 m fifteen meters
+        11 cm eleven centimeters
+        823.06 KB eight hundred twenty three point o six kilobytes
+        100Gb/s one hundred gigabits per second
+    '''
 
 def currency2words(string):
-
+    '''
+    possible formats
+    ----------------
+        Rs 1,000 cr one thousand crore rupees
+        €4 million four million euros; €5.7 million five point seven million euros
+        $10,000 ten thousand dollars; $10 million ten million dollars; $7M seven million dollars
+        £50,000 fifty thousand pounds; £500m five hundred million pounds; £300 million three hundred million pounds
+    '''
     pass
 
 def _make_vocab():
@@ -427,10 +475,28 @@ def _make_vocab():
     for i in range(1,13):
         _months[i] = _list[i-1]
 
+    global _units
+    _units = {}
+    keys = ['mi', 'km', 'm', 'cm', 'mm', 'PB', 'MB', 'KB', 'Pb', 'Mb', 'Kb']
+    values = ['miles', 'kilometers', 'meters', 'centimeters', 'millimeters', \
+        'petabytes', 'megabytes', 'kilobytes', \
+        'petabits', 'megabits', 'kilobits']
+    for k,v in zip(keys, values):
+        _units[k] = v
+
+    global _currencies
+    _currencies = {}
+    keys = ['Rs', '€', '$', '£']
+    values = ['rupees', 'euros', 'dollars', 'pounds']
+    for k,v in zip(keys, values):
+        _currencies[k] = v
+
     # print(_num2word)
     # print(_placeValue)
     # print(_num2ordinal)
     # print(_months)
+    # print(_units)
+    # print(_currencies)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')
@@ -439,7 +505,7 @@ if __name__ == "__main__":
     
     _make_vocab()
 
-    print(time2words("12:00:00"))
+    # print(time2words("12:00:00"))
 
     solution_dump(args)
 
