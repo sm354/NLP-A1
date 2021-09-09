@@ -259,7 +259,7 @@ def num2words(string):
             106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
             0 7506 0625 8 o sil seven five o six sil o six two five sil eight
     '''
-    regex = r"(((\d+)(,?))+)(\.?)(\d*)(\s*%?)" # regex for num, comma_num, dec_perc_num
+    regex = r"(-?)(((\d+)(,?))+)(\.?)(\d*)(\s*%?)" # regex for num, comma_num, dec_perc_num
     match = re.fullmatch(regex, string)
     if match != None:
         num_string = match.group()
@@ -477,10 +477,10 @@ def _make_vocab():
 
     global _units
     _units = {}
-    keys = ['mi', 'km', 'm', 'cm', 'mm', 'PB', 'MB', 'KB', 'Pb', 'Mb', 'Kb']
+    keys = ['mi', 'km', 'm', 'cm', 'mm', 'PB', 'GB', 'MB', 'KB', 'Pb', 'Gb', 'Mb', 'Kb']
     values = ['miles', 'kilometers', 'meters', 'centimeters', 'millimeters', \
-        'petabytes', 'megabytes', 'kilobytes', \
-        'petabits', 'megabits', 'kilobits']
+        'petabytes', 'gigabytes', 'megabytes', 'kilobytes', \
+        'petabits', 'gigabits', 'megabits', 'kilobits']
     for k,v in zip(keys, values):
         _units[k] = v
 
