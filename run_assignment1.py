@@ -76,8 +76,6 @@ def findOT(inp_tok, rules):
     
     return '<self>' if out_tok == None else out_tok
 
-
-
 def sil(string):
     regex = r"^\W$"
     return None if re.match(regex, string) == None else "sil"
@@ -132,20 +130,20 @@ def dates2words(string):
     regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december) ([1-2]\d{3})"
     match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
-        return "the " + _convertday(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
+        return "the " + _number_to_ordinal(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
     
     # date_month_year
     # regex = r"([A-Za-z]+) (\d{1,2}),? ([1-2]\d{3})"
     regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) (\d{1,2}),? ([1-2]\d{3})"
     match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
-        return match.group(1).lower() + " " + _convertday(match.group(2)) + " " + _convertyear(match.group(3))
+        return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(3))
 
     # 2008-01-21
     regex = r"(\d{4})-(\d{2})-(\d{2})"
     match = re.fullmatch(regex, string)
     if match != None:
-        return "the " + _convertday(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
+        return "the " + _number_to_ordinal(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
     
     return None
 
@@ -168,19 +166,6 @@ def _convertyear(year):
         else:
             word = word + ' ' + _number_to_word(year[2:])
         return word
-
-def _convertday(day):
-    '''
-    get ordinals uptill 99
-    '''
-    if 0 < int(day) <= 20:
-        return _ordinals[int(day)]
-    
-    if int(day)%10 == 0:
-        return _number_to_word(day)[:-1] + "ieth" # remove 'y'
-    
-    if 20 < int(day) < 100:
-        return _number_to_word(day[0]+'0') + " " + _ordinals[int(day[1])]
 
 def time2words(string):
     '''
@@ -290,10 +275,31 @@ def num2words(string):
     if match != None:
         return _hyphen_num_to_word(match.group())
 
-    regex_ordinals = r"\d+(st|nd|rd|th)"
+    regex_ordinals = r"(\d+)(st|nd|rd|th)"
     match = re.fullmatch(regex_ordinals, string)
+    if match != None:
+        return _number_to_ordinal(match.group(1))  # (st|nd|rd|th) is not important
 
     return None
+
+def _number_to_ordinal(number):
+    '''
+        get ordinals uptill 99
+    '''
+    if 0 <= int(number) <= 20:
+        return _num2ordinal[int(number)]
+    
+    if int(number)%10 == 0 and 20 < int(number) < 100:
+        return _num2ordinal[int(number)]
+    
+    if 20 < int(number) < 100:
+        return _number_to_word(number[0]+'0') + " " + _num2ordinal[int(number[1])]
+
+    if int(number)%100 == 0:
+        return _number_to_word(number) + "th"
+    
+    if 100 < int(number) < 1000:
+        return _number_to_word(number[0]+'00') + " " + _number_to_ordinal(number[1:])
 
 def _number_to_word(number):
     '''
@@ -405,12 +411,14 @@ def _make_vocab():
     for i in range(len(_list)):
         _placeValue[i] = _list[i]
     
-    global _ordinals
-    _ordinals = {}
-    _list = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
+    global _num2ordinal
+    _num2ordinal = {}
+    _list = ["zeroth", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
     _list+= ["eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"]
-    for i in range(1,21):
-        _ordinals[i] = _list[i-1]
+    for i in range(0,21):
+        _num2ordinal[i] = _list[i]
+    for i in range(30, 100, 10):
+        _num2ordinal[i] = _num2word[i][:-1] + "ieth"
 
     global _months
     _months = {}
@@ -420,7 +428,7 @@ def _make_vocab():
 
     # print(_num2word)
     # print(_placeValue)
-    # print(_ordinals)
+    # print(_num2ordinal)
     # print(_months)
 
 if __name__ == "__main__":
