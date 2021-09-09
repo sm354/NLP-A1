@@ -198,8 +198,8 @@ def time2words(string):
             return None
         if num2 == "zero":
             if 0 < int(match.group(1).strip()) < 12:
-                return num1 + "o'clock"
-            return num1 + "hundred"
+                return num1 + " o'clock"
+            return num1 + " hundred"
         return num1 + " " + num2
     
     # Time format
@@ -219,9 +219,10 @@ def time2words(string):
             num += (num2 + " minutes ")
             zero_time = False
         if zero_time:
-            num = num3 + "seconds"
+            num = num3 + " seconds"
         else:
-            num += ("and " + num3 + " seconds")
+            if num3 != "zero":
+                num += ("and " + num3 + " seconds")
         return num
 
     return None
@@ -437,6 +438,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     _make_vocab()
+
+    print(time2words("12:00:00"))
 
     solution_dump(args)
 
