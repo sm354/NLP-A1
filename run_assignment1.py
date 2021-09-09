@@ -246,8 +246,10 @@ def num2words(string):
             NOT considering cases like .12%, .12 etc
         frac_num    
             7/283 : seven two hundred eighty thirds
-            1 1/2 one and a half
             -3/5 minus three fifths
+            1 7/8 one and seven eighths
+            1 1/2 one and a half
+            2/4 two quarters
         hyp_num
             978-0-304-35252-4 nine seven eight sil o sil three o four sil three five two five two sil four
             1-881089-97-5 one sil eight eight one o eight nine sil nine seven sil five
@@ -288,20 +290,23 @@ def num2words(string):
             num_string = num1
 
         return num_string + " percent" if isPercentage else num_string
-    # -----
-    # regex_num = r"(-?)\d+"
-    # match = re.fullmatch(regex_num, string)
-    # if match != None:
-    #     return _number_to_word(match.group())
     
-    # regex_comma_num = r"(-?)((,?)\d{1,3})+" # this includes some false weird examples also like '90,0', ',123,1,1', etc BUT it also includes all the numbers
-    # match = re.fullmatch(regex_comma_num, string)
-    # if match != None:
-    #     return _number_to_word(''.join(match.group().split(',')))
+    regex_fractions = r"(-?)(\d*\s?)(-?)(\d+/\d+)"
+    match = re.fullmatch(regex_fractions, string)
+    if match != None:
+        num2 = match.group(4)
+        num2 = num2.split('/')
+        num2_a = _number_to_word(num2[0])
+        num2_b = _number_to_ordinal(num2[1])
+        num2 = num2_a + " " + num2_b + "s"
 
-    # regex_dec_perc = r"(-?)(\d*)(\.)(\d)" # this includes some false weird examples also like '90,0', ',123,1,1', etc
-    # match = re.fullmatch(regex_dec_perc, string)
-    # -----
+        if match.group(2).strip() != "":
+            num1 = _number_to_word(match.group(2).strip())
+            if match.group(3) == "-":
+                num2 = "minus " + num2
+            num2 = num1 + " and " + num2
+
+        return "minus " + num2 if match.group(1) == "-" else num2
 
     regex_hyp_num = r"(\d+-)+(\d+)" # this includes dates also -- NEED TO FIX THIS IMPORTANT!
     match = re.fullmatch(regex_hyp_num, string)
@@ -317,7 +322,7 @@ def num2words(string):
 
 def _number_to_ordinal(number):
     '''
-        get ordinals uptill 99
+        get ordinals uptill 999
     '''
     if 0 <= int(number) <= 20:
         return _num2ordinal[int(number)]
@@ -333,6 +338,8 @@ def _number_to_ordinal(number):
     
     if 100 < int(number) < 1000:
         return _number_to_word(number[0]+'00') + " " + _number_to_ordinal(number[1:])
+    
+    return "<ORDINAL > 999 NOT CREATED>" # to avoid error when number greater than 999 passed, and output string is expected
 
 def _number_to_word(number):
     '''
