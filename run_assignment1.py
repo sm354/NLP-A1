@@ -71,7 +71,10 @@ def find_output_token(inp_tok, rules):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
     for rule in rules:
+        # try:
         out_tok = rule(inp_tok)
+        # except:
+        #     return "<self>"
         if out_tok != None:
             break
     return '<self>' if out_tok == None else out_tok
@@ -146,7 +149,15 @@ def dates2words(string):
     regex = r"[1-2]\d{3}"
     match = re.fullmatch(regex, string)
     if match != None:
-        return _convertyear(match.group()) 
+        return _convertyear(match.group())
+
+    # only year + "s"
+    regex = r"[1-2]\d{2}0s"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        num = _convertyear(match.group()[:-1])
+        num = num + "s" if num[-1] != 'y' else num[:-1] + "ies"
+        return num
     
     # day_month
     regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december)\.?"
@@ -182,16 +193,16 @@ def dates2words(string):
         return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(4))
 
     # 2008-01-21
-    regex = r"([1-2]\d{3})-(\d{2})-(\d{2})"
+    regex = r"([1-2]\d{3})-(\d{1,2})-(\d{1,2})"
     match = re.fullmatch(regex, string)
     if match != None:
         return "the " + _number_to_ordinal(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
 
     # 01-02-2020 January 2nd twenty twenty
-    regex = r"(\d{2})-(\d{2})-([1-2]\d{3})"
+    regex = r"(\d{1,2})-(\d{1,2})-([1-2]\d{3})"
     match = re.fullmatch(regex, string)
     if match != None:
-        return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(3))
+        return _months[int(match.group(1))] + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(3))
 
     return None
 
