@@ -21,6 +21,7 @@ import argparse
 import json
 import re
 import subprocess # remove this line before final submission
+import ipdb # remove this line before final submission
 
 # parse arguments
 def add_args(parser):
@@ -312,22 +313,24 @@ def num2words(string):
 
         return num_string + " percent" if isPercentage else num_string
     
-    regex_fractions = r"(-?)(\d*\s?)(-?)(\d+/\d+)"
+    regex_fractions = r"(-?\s*\d+\s+)?(-?\d+/\d+)"
     match = re.fullmatch(regex_fractions, string)
     if match != None:
-        num2 = match.group(4)
+        # if string == "-3/5":
+            # ipdb.set_trace()
+        num2 = match.group(2)
         num2 = num2.split('/')
         num2_a = _number_to_word(num2[0])
         num2_b = _number_to_ordinal(num2[1])
         num2 = num2_a + " " + num2_b + "s"
-
-        if match.group(2).strip() != "":
-            num1 = _number_to_word(match.group(2).strip())
-            if match.group(3) == "-":
-                num2 = "minus " + num2
+        
+        # check if the first num is present or not
+        if match.group(1) != None:
+            num1 = ''.join(re.split(r"\s+", match.group(1)))
+            num1 = _number_to_word(num1)
             num2 = num1 + " and " + num2
 
-        return "minus " + num2 if match.group(1) == "-" else num2
+        return num2
 
     regex_hyp_num = r"(\d[\(\)\s-]?)+" # this includes dates also -- But dates2word given higher priority so this is taken into consideration
     match = re.fullmatch(regex_hyp_num, string)
@@ -380,7 +383,7 @@ def _number_to_word(number):
     if 0 <= int(number) <= 20:
         # this takes care of case when number == 0 (empty string is not returned)
         # -0 is returned as 0
-        return _num2word[int(number)]
+        return "minus " + _num2word[int(number)] if negative_num else _num2word[int(number)]
     
     final_word = []
     
