@@ -484,23 +484,17 @@ def currency2words(string):
         $10,000 ten thousand dollars; $10 million ten million dollars; $7M seven million dollars
         £50,000 fifty thousand pounds; £500m five hundred million pounds; £300 million three hundred million pounds
     '''
-    # regex = r"(Rs|€|\$|£)\s?((((\d+)(,?))+)(\.?)(\d*)(\s*%?))\s?((cr|million|M|m)?)"
-    # match = re.fullmatch(regex, string)
-    # if match != None:
-    #     currency = re.search(r"(Rs|€|\$|£)", string)
-    #     currency = _currencies[currency.group()]
+    regex = r"(Rs|€|\$|£)\s?(((\d+,?)+)\.?\d*)\s*(cr|million|M|m)?"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        currency = _currencies[match.group(1)]
+        num = num2words(match.group(2))
 
-    #     value = string.replace(currency, '').strip()
-    #     val = re.search(r"(cr|million|M|m)", value)
-    #     if val.group() != None:
-    #         val = _currencies[val.group()] 
-    #         value = value.replace(val, "").strip()
-    #     else:
-    #         val = None
-    #         value = value.strip()
+        if match.group(5) != None:
+            num += (" " + _amounts[match.group(5).lower()])    
+        num = num + " " + currency
         
-    #     num = _number_to_word(value)
-    #     return currency + " " + num + " " + val if val != None else currency + " " + num
+    return num if match != None else None
 
 def _make_vocab():
     # make dictionaries for hard-coded mappings like '1' -> 'one'
@@ -552,6 +546,13 @@ def _make_vocab():
     values = ['rupees', 'euros', 'dollars', 'pounds']
     for k,v in zip(keys, values):
         _currencies[k] = v
+
+    global _amounts
+    _amounts = {}
+    keys = ['m', 'million', 'b', 'billion', 'cr', 'crore', 'crores']
+    values = ['million', 'million', 'billion', 'billion', 'crore', 'crore', 'crore']
+    for k,v in zip(keys, values):
+        _amounts[k] = v
 
     # print(_num2word)
     # print(_placeValue)
