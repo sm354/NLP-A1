@@ -25,14 +25,17 @@ def calculateF1(args):
         f.close()
     assert len(inp) == len(grnd)
 
+    if args.debug:
+        wrong_count, total_count = 0, 0
+
     # calculate the precision, recall, and then f1 score
-    prec_num, prec_den, rec_num, rec_den, total_correct = 0.0, 0.0, 0.0, 0.0, 0
-    for idx, (y_, y) in enumerate(zip(pred, grnd)):
-        assert y_['sid'] == y['sid']
+    prec_num, prec_den, rec_num, rec_den = 0.0, 0.0, 0.0, 0.0
+    for idx, (x, y_, y) in enumerate(zip(inp, pred, grnd)):
+        assert y_['sid'] == y['sid'] == x['sid']
 
         debug_flag = False 
 
-        for pred_tok, true_tok in zip(y_['output_tokens'], y['output_tokens']):
+        for inp_tok, pred_tok, true_tok in zip(x['input_tokens'], y_['output_tokens'], y['output_tokens']):
             # case 1, 3, 5
             if true_tok != "sil" and true_tok != "<self>":
                 if pred_tok == true_tok:
@@ -41,33 +44,28 @@ def calculateF1(args):
                     rec_num += 1.0
                     rec_den += 1.0
                 elif pred_tok == "sil" or pred_tok == "<self>":
-                    if args.debug:
-                        debug_flag = True
                     rec_den += 1.0
+                    if args.debug:
+                        wrong_count += 1
+                        print("INPUT: %s\nOutput: %s\nPredicted: %s\nSID: %u\n"%(inp_tok, true_tok, pred_tok, x['sid']))
                 else:
                     prec_den += 1.0
                     rec_den += 1.0
+                    if args.debug:
+                        wrong_count += 1
+                        print("INPUT: %s\nOutput: %s\nPredicted: %s\nSID: %u\n"%(inp_tok, true_tok, pred_tok, x['sid']))
 
             # case 4
             elif true_tok=="sil" or true_tok=="<self>":
                 if pred_tok != true_tok:
-                    if args.debug:
-                        debug_flag = True
                     prec_den += 1.0
+                    if args.debug:
+                        wrong_count += 1
+                        print("INPUT: %s\nOutput: %s\nPredicted: %s\nSID: %u\n"%(inp_tok, true_tok, pred_tok, x['sid']))
             
             # case 2 doesn't affect
-        
-        if debug_flag:
-            x = inp[idx]
-            assert x['sid'] == y['sid']
-
-            print("INPUT")
-            print(x)
-            print("OUTPUT")
-            print(y)
-            print("PREDICTION")
-            print(y_)
-            print()
+            if args.debug:
+                total_count += 1
         
     precision = prec_num / prec_den if prec_den != 0.0 else 0.0
     recall = rec_num / rec_den if rec_den != 0.0 else 0.0
@@ -76,6 +74,8 @@ def calculateF1(args):
     
     print("number of sentences:", len(pred))
     print("precision:", round(100*precision,1), " recall:", round(100*recall,1), "f1:", round(100*f1,1))
+    if args.debug:
+        print("%u wrong tokens out of total %u tokens"%(wrong_count, total_count))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')

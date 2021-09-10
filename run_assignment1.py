@@ -201,7 +201,13 @@ def time2words(string):
                 return num1 + " o'clock"
             return num1 + " hundred"
         return num1 + " " + num2
-    
+
+    # edge case - 9 am, 12 pm, etc == the ones without ":"
+    regex = r"(\d{1,2})\s+([PpAa]\.?[Mm]\.?)" # allowing too many white space as such errors may come in data
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return _number_to_word(match.group(1).strip()) + " " + abbreviation(match.group(2).strip().upper())
+        
     # Time format
     regex = r"(\s*\d{1,2}\s*):(\s*\d{1,2}\s*):(\s*\d{1,2}\s*)" # allowing too many white space as such errors may come in data
     match = re.fullmatch(regex, string)
@@ -322,7 +328,10 @@ def num2words(string):
 
 def _number_to_ordinal(number):
     '''
-        get ordinals uptill 999
+        get ordinals uptil 999
+        
+        for numbers >= 1000, there is a pattern - if last two digits == 0, then add "th" to the remaining _number_to_word(number) 
+        else append _number_to_ordinal(number[-2:]) to _number_to_word(number[:-2])
     '''
     if 0 <= int(number) <= 20:
         return _num2ordinal[int(number)]
@@ -430,13 +439,42 @@ def units2words(string):
     ----------------
         1,908 mi one thousand nine hundred eight miles
         3,070 km three thousand seventy kilometers
-        219.4/km2 two hundred nineteen point four per square kilometers; 14.6 km2 fourteen point six square kilometers
+        219.4/km² two hundred nineteen point four per square kilometers; 14.6 km2 fourteen point six square kilometers
         15 m fifteen meters
         11 cm eleven centimeters
         823.06 KB eight hundred twenty three point o six kilobytes
         100Gb/s one hundred gigabits per second
     '''
+    regex = r"(-?)(((\d+)(,?))+)(\.?)(\d*)(\s*)(/?)(((%s)(²?)(/?))+)"%('|'.join(list(_units.keys())))
+    match = re.fullmatch(regex, string)
+    if match != None:
+        regex_units = r"(/?)(((%s)(²?)(/?))+)"%('|'.join(list(_units.keys())))
+        match = re.search(regex_units, string)
+        # get the number
+        num = string[:match.start()].strip()
+        num = num2words(num)
 
+        if num == None:
+            print(string + "|" + string[:match.start()].strip())
+
+        # now see the characters like '/', '²', and units
+        num_2 = []
+        unit_string = string[match.start():]
+        while len(unit_string) != 0:
+            if unit_string[0] == '/':
+                num_2.append('per')
+                unit_string = unit_string[1:]
+            elif unit_string[0] == '²':
+                num_2.insert(-1, 'square')
+                unit_string = unit_string[1:]
+            else:
+                match = re.search(r"(%s)"%('|'.join(list(_units.keys()))), unit_string)
+                num_2.append(_units[unit_string[match.start():match.end()]])
+                unit_string = unit_string[match.end():]
+        num_2 = ' '.join(num_2)
+        num = num + " " + num_2
+    return None if match == None else num
+    
 def currency2words(string):
     '''
     possible formats
@@ -446,7 +484,23 @@ def currency2words(string):
         $10,000 ten thousand dollars; $10 million ten million dollars; $7M seven million dollars
         £50,000 fifty thousand pounds; £500m five hundred million pounds; £300 million three hundred million pounds
     '''
-    pass
+    # regex = r"(Rs|€|\$|£)\s?((((\d+)(,?))+)(\.?)(\d*)(\s*%?))\s?((cr|million|M|m)?)"
+    # match = re.fullmatch(regex, string)
+    # if match != None:
+    #     currency = re.search(r"(Rs|€|\$|£)", string)
+    #     currency = _currencies[currency.group()]
+
+    #     value = string.replace(currency, '').strip()
+    #     val = re.search(r"(cr|million|M|m)", value)
+    #     if val.group() != None:
+    #         val = _currencies[val.group()] 
+    #         value = value.replace(val, "").strip()
+    #     else:
+    #         val = None
+    #         value = value.strip()
+        
+    #     num = _number_to_word(value)
+    #     return currency + " " + num + " " + val if val != None else currency + " " + num
 
 def _make_vocab():
     # make dictionaries for hard-coded mappings like '1' -> 'one'
@@ -482,10 +536,11 @@ def _make_vocab():
     for i in range(1,13):
         _months[i] = _list[i-1]
 
+    # important - here order of keys matters as this is used in regex: ex. 'mm' searched first than 'm'
     global _units
     _units = {}
-    keys = ['mi', 'km', 'm', 'cm', 'mm', 'PB', 'GB', 'MB', 'KB', 'Pb', 'Gb', 'Mb', 'Kb']
-    values = ['miles', 'kilometers', 'meters', 'centimeters', 'millimeters', \
+    keys = ['ha', 'mi', 'km', 'mm', 'cm', 'm', 's', 'PB', 'GB', 'MB', 'KB', 'Pb', 'Gb', 'Mb', 'Kb']
+    values = ['hectares', 'miles', 'kilometers', 'millimeters', 'centimeters', 'meters', 'second', \
         'petabytes', 'gigabytes', 'megabytes', 'kilobytes', \
         'petabits', 'gigabits', 'megabits', 'kilobits']
     for k,v in zip(keys, values):
