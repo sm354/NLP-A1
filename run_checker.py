@@ -11,16 +11,16 @@ def add_args(parser):
 # calculated f-measure using prediction and ground truth
 def calculateF1(args):
     # read the output and prediction files
-    with open(args.solution_path, 'r') as f:
+    with open(args.solution_path, 'r', encoding="utf-8") as f:
         pred = json.load(f)
         f.close()
-    with open(args.ground_truth_path, 'r') as f:
+    with open(args.ground_truth_path, 'r', encoding="utf-8") as f:
         grnd = json.load(f)
         f.close()
     assert len(pred) == len(grnd)
 
     # for debugger
-    with open('assignment_1_data/input.json', 'r') as f:
+    with open('assignment_1_data/input.json', 'r', encoding="utf-8") as f:
         inp = json.load(f)
         f.close()
     assert len(inp) == len(grnd)

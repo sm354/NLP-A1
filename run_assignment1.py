@@ -33,7 +33,7 @@ def add_args(parser):
 # make solution using input sentences
 def solution_dump(args):
     # load input data
-    with open(args.input_path, 'r') as input_file:
+    with open(args.input_path, 'r', encoding="utf-8") as input_file:
         input_data = json.load(input_file)
         input_file.close()
 
@@ -46,7 +46,7 @@ def solution_dump(args):
                             'output_tokens':solution_tokens})
 
     # write the predicted sentences in args.solution
-    with open(args.solution_path,'w') as solution_file:
+    with open(args.solution_path, 'w', encoding="utf-8") as solution_file:
         json.dump(solution_data, solution_file, indent=2, ensure_ascii=False)
         solution_file.close()
 
@@ -76,13 +76,34 @@ def find_output_token(inp_tok, rules):
             break
     return '<self>' if out_tok == None else out_tok
 
-# defined list of rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
+# defined list of rules in solution function
 def sil(string):
     regex = r"^\W$"
     return None if re.match(regex, string) == None else "sil"
 
+def romans2words(string):
+    '''
+    possible cases
+    --------------
+        11
+        ['"', 'United', 'Nations', 'Treaty', 'Collection', ':', 'Chapter', 'IV', ':', 'Human', 'Rights', ':', '11', '.']
+        ['sil', '<self>', '<self>', '<self>', '<self>', 'sil', '<self>', 'four', 'sil', '<self>', '<self>', 'sil', 'eleven', 'sil']
+
+        39
+        ['Mitochondrial', 'and', 'nuclear', 'localization', 'of', 'topoisomerase', 'II', 'in', 'the', 'flagellate', 'Bodo', 'saltans', '(', 'Kinetoplastida', ')', ',', 'a', 'species', 'with', 'non', 'catenated', 'kinetoplast', 'DNA', '.']
+        ['<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'two', '<self>', '<self>', '<self>', '<self>', '<self>', 'sil', '<self>', 'sil', 'sil', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'd n a', 'sil']
+
+        49
+        ['In', '1984', 'and', "'", '85', ',', 'the', 'Ford', 'Motor', 'Company', 'offered', 'a', 'Gianni', 'Versace', 'Edition', 'of', 'its', 'Lincoln', 'Mark', 'VII', 'luxury', 'coupe', '.']
+        ['<self>', 'nineteen eighty four', '<self>', 'sil', 'eighty five', 'sil', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'seven', '<self>', '<self>', 'sil']
+
+
+
+    '''
+    return None
+
 def abbreviation(string):
-    regex = r"([A-Z](\.)?(\s)*)+(-?)" # this regex includes the roman numerals as well => precision would be high (FP would be high) # (-?) added for cases like "USA-"
+    regex = r"([A-Z]\.?\s*)+-?" # this regex includes the roman numerals as well => precision would be high (FP would be high) # (-?) added for cases like "USA-"
     match = re.fullmatch(regex, string)
 
     if match == None:
@@ -559,7 +580,6 @@ def _make_vocab():
     values = ['rupees', 'euros', 'dollars', 'pounds']
     for k,v in zip(keys, values):
         _currencies[k] = v
-
     global _amounts
     _amounts = {}
     keys = ['m', 'million', 'b', 'billion', 'cr', 'crore', 'crores']
@@ -580,8 +600,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     _make_vocab()
-
-    # print(time2words("12:00:00"))
 
     solution_dump(args)
 
