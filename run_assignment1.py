@@ -283,17 +283,14 @@ def num2words(string):
             106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
             0 7506 0625 8 o sil seven five o six sil o six two five sil eight
     '''
-    regex = r"(-?)(((\d+)(,?))+)(\.?)(\d*)(\s*%?)" # regex for num, comma_num, dec_perc_num
+    regex = r"(-?(\d+,?)+\.?\d*\s*)(%|pc|percent|percentage)?" # regex for num, comma_num, dec_perc_num
     match = re.fullmatch(regex, string)
-    if match != None:
-        num_string = match.group()
-        
+    if match != None:        
         # remove the commas
-        num_string = ''.join(num_string.split(','))
+        num_string = ''.join(match.group(1).split(',')).strip() # stripping because there could be spaces before percentage
         
         # check percentage
-        isPercentage = True if '%' in num_string else False
-        num_string = num_string[:-1].strip() if isPercentage else num_string # stripping because there could be spaces before percentage
+        isPercentage = True if match.group(3) != None else False
         
         # check decimal
         num_string = num_string.split('.')
@@ -316,8 +313,6 @@ def num2words(string):
     regex_fractions = r"(-?\s*\d+\s+)?(-?\d+/\d+)"
     match = re.fullmatch(regex_fractions, string)
     if match != None:
-        # if string == "-3/5":
-            # ipdb.set_trace()
         num2 = match.group(2)
         num2 = num2.split('/')
         num2_a = _number_to_word(num2[0])
