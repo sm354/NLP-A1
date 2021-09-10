@@ -71,10 +71,11 @@ def find_output_token(inp_tok, rules):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
     for rule in rules:
-        # try:
-        out_tok = rule(inp_tok)
-        # except:
-        #     return "<self>"
+        try:
+            out_tok = rule(inp_tok)
+        except:
+            print("error encountered for input token %s in rule %s"%(inp_tok, rule))
+            return "<self>"
         if out_tok != None:
             break
     return '<self>' if out_tok == None else out_tok
@@ -144,6 +145,7 @@ def dates2words(string):
         14 June 2014 the fourteenth of june twenty fourteen
         January 14, 2008 january fourteenth two thousand eight; May 29, 2013 may twenty ninth twenty thirteen; November 20, 2013; July 2nd, 2014 july second twenty fourteen
         2008-01-08 the eighth of january two thousand eight
+        decades 1940s
     '''
     # only year
     regex = r"[1-2]\d{3}"
@@ -233,33 +235,32 @@ def time2words(string):
         NOT strictly time but Numbers --> there is no "hours", "minutes", "seconds" in the output tokens
             9:30 nine thirty; 1:54 one fifty four; 20: 43 twenty forty three ||| 11:00am eleven a m; 7:00 p.m. seven p m; 5:10PM; 5:00 PM; 9:00 AM
             two cases:
-                am, pm is given --> 12:00pm, 11:02am, etc 
+                am, pm is given --> 12:00pm, 11:02am, 5:00 am PST
                 am, pm not given --> 9:30, 20: 43, 11:00, 21:00; (21:00, twenty one hundred), (11:00, eleven o'clock), (00:00, zero hundred)
         Time format --> only one example found in data 
             2:27:07 two hours twenty seven minutes and seven seconds
-
     '''
     # NOT strictly time but Numbers
-    regex = r"(\d{1,2}\s*):(\s*\d{1,2})(\s*[PpAa]\.?[Mm]\.?)?" # allowing too many white space as such errors may come in data
+    regex = r"(\d{1,2}\s*):(\s*\d{1,2})(\s*[PpAa]\.?[Mm]\.?)?(\s+([A-Z]\.?)+)?" # allowing too many white space as such errors may come in data
     match = re.fullmatch(regex, string)
     if match != None:
+        num = None
         if match.group(3) != None:
             num1 = _number_to_word(match.group(1).strip())
             num2 = _number_to_word(match.group(2).strip()) 
             num1 = num1 + " " + num2 if num2 != "zero" else num1
             num1+= (" " + abbreviation(match.group(3).strip().upper())) # pass upper case PM, AM, P.M., etc to abbreviation
-            return num1
-
-        num1 = _number_to_word(match.group(1).strip())
-        num2 = _number_to_word(match.group(2).strip())         
-        if num1 == "zero" and num2 != "zero":
-            # TO DO --------------------------------------- REMAINING
-            return None
-        if num2 == "zero":
-            if 0 < int(match.group(1).strip()) < 12:
-                return num1 + " o'clock"
-            return num1 + " hundred"
-        return num1 + " " + num2
+            num = num1
+        else:
+            num1 = _number_to_word(match.group(1).strip())
+            num2 = _number_to_word(match.group(2).strip())         
+            if num1 == "zero" and num2 != "zero":
+                num = num1 + " " + num2
+            elif num2 == "zero":
+                num = num1 + " o'clock" if 0 < int(match.group(1).strip()) < 12 else num1 + " hundred"
+            else:
+                num = num1 + " " + num2
+        return num + " " + abbreviation(match.group(4).strip().upper()) if match.group(4) != None else num
 
     # edge case - 9 am, 12 pm, etc == the ones without ":"
     regex = r"(\d{1,2})\s+([PpAa]\.?[Mm]\.?)" # allowing too many white space as such errors may come in data
