@@ -56,7 +56,7 @@ def solution(input_tokens):
 
     # define the rules for the patterns observed in the given data
     # this order also denotes the priority given i.e. higher to lower priority as we move from left to right ||| important, for ex., when token is year (2012) and not number
-    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
+    rules = [sil, romans2words, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
 
     for input_token in input_tokens:
         output_token = find_output_token(input_token, rules)
@@ -78,8 +78,8 @@ def find_output_token(inp_tok, rules):
 
 # defined list of rules in solution function
 def sil(string):
-    regex = r"^\W$"
-    return None if re.match(regex, string) == None else "sil"
+    regex = r"\W"
+    return None if re.fullmatch(regex, string) == None else "sil"
 
 def romans2words(string):
     '''
@@ -97,9 +97,11 @@ def romans2words(string):
         ['In', '1984', 'and', "'", '85', ',', 'the', 'Ford', 'Motor', 'Company', 'offered', 'a', 'Gianni', 'Versace', 'Edition', 'of', 'its', 'Lincoln', 'Mark', 'VII', 'luxury', 'coupe', '.']
         ['<self>', 'nineteen eighty four', '<self>', 'sil', 'eighty five', 'sil', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'seven', '<self>', '<self>', 'sil']
 
-
-
     '''
+    regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences like this ["I", "am", "Shubham"]} --- NEED TO FIX THIS BY CHECKING PREVIOUS TOKEN IN SOLUTION
+    match = re.fullmatch(regex, string)
+    if match != None and match.group() in _romans.keys():
+        return _romans[match.group()]
     return None
 
 def abbreviation(string):
@@ -580,6 +582,7 @@ def _make_vocab():
     values = ['rupees', 'euros', 'dollars', 'pounds']
     for k,v in zip(keys, values):
         _currencies[k] = v
+    
     global _amounts
     _amounts = {}
     keys = ['m', 'million', 'b', 'billion', 'cr', 'crore', 'crores']
@@ -587,12 +590,19 @@ def _make_vocab():
     for k,v in zip(keys, values):
         _amounts[k] = v
 
+    global _romans
+    _romans = {}
+    keys = "I II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI XVII XVIII XIX XX XXI XXII XXIII XXIV XXV XXVI XXVII XXVIII XXIX XXX XXXI XXXII XXXIII XXXIV XXXV XXXVI XXXVII XXXVIII XXXIX XL XLI XLII XLIII XLIV XLV XLVI XLVII XLVIII XLIX L LI LII LIII LIV LV LVI LVII LVIII LIX LX LXI LXII LXIII LXIV LXV LXVI LXVII LXVIII LXIX LXX LXXI LXXII LXXIII LXXIV LXXV LXXVI LXXVII LXXVIII LXXIX LXXX LXXXI LXXXII LXXXIII LXXXIV LXXXV LXXXVI LXXXVII LXXXVIII LXXXIX XC XCI XCII XCIII XCIV XCV XCVI XCVII XCVIII XCIX C CI CII CIII CIV CV CVI CVII CVIII CIX CX CXI CXII CXIII CXIV CXV CXVI CXVII CXVIII CXIX CXX CXXI CXXII CXXIII CXXIV CXXV CXXVI CXXVII CXXVIII CXXIX CXXX CXXXI CXXXII CXXXIII CXXXIV CXXXV CXXXVI CXXXVII CXXXVIII CXXXIX CXL CXLI CXLII CXLIII CXLIV CXLV CXLVI CXLVII CXLVIII CXLIX CL".split(' ')
+    for i in range(1,151):
+        _romans[keys[i-1]] = _number_to_word(str(i))
+
     # print(_num2word)
     # print(_placeValue)
     # print(_num2ordinal)
     # print(_months)
     # print(_units)
     # print(_currencies)
+    # print(_romans)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='COL 772 Assignment 1 | 2018EE10957')
