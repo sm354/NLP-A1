@@ -85,41 +85,50 @@ def romans2words(string):
     '''
     possible cases
     --------------
-        11
-        ['"', 'United', 'Nations', 'Treaty', 'Collection', ':', 'Chapter', 'IV', ':', 'Human', 'Rights', ':', '11', '.']
-        ['sil', '<self>', '<self>', '<self>', '<self>', 'sil', '<self>', 'four', 'sil', '<self>', '<self>', 'sil', 'eleven', 'sil']
-
-        39
-        ['Mitochondrial', 'and', 'nuclear', 'localization', 'of', 'topoisomerase', 'II', 'in', 'the', 'flagellate', 'Bodo', 'saltans', '(', 'Kinetoplastida', ')', ',', 'a', 'species', 'with', 'non', 'catenated', 'kinetoplast', 'DNA', '.']
-        ['<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'two', '<self>', '<self>', '<self>', '<self>', '<self>', 'sil', '<self>', 'sil', 'sil', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'd n a', 'sil']
-
-        49
-        ['In', '1984', 'and', "'", '85', ',', 'the', 'Ford', 'Motor', 'Company', 'offered', 'a', 'Gianni', 'Versace', 'Edition', 'of', 'its', 'Lincoln', 'Mark', 'VII', 'luxury', 'coupe', '.']
-        ['<self>', 'nineteen eighty four', '<self>', 'sil', 'eighty five', 'sil', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', '<self>', 'seven', '<self>', '<self>', 'sil']
-
+        Chapter IV : <self> four; 'topoisomerase', 'II', 'in' : 'two', '<self>', '<self>'; 
+        'Lincoln', 'Mark', 'VII', 'luxury' : '<self>', 'seven', '<self>';
     '''
-    regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences like this ["I", "am", "Shubham"]} --- NEED TO FIX THIS BY CHECKING PREVIOUS TOKEN IN SOLUTION
+    regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences - I am Shubham, Do I need to do?} --- DIFFICULT TO FIX EVEN BY SEEING NEIGHBOURS
     match = re.fullmatch(regex, string)
     if match != None and match.group() in _romans.keys():
         return _romans[match.group()]
     return None
 
 def abbreviation(string):
-    regex = r"([A-Z]\.?\s*)+-?" # this regex includes the roman numerals as well => precision would be high (FP would be high) # (-?) added for cases like "USA-"
-    match = re.fullmatch(regex, string)
-
-    if match == None:
+    # single capital letters not abbreviated
+    if re.fullmatch("[A-Z]", string) != None:
         return None
+
+    # this regex includes the roman numerals as well => precision would be high (FP would be high) # (-?) added for cases like "USA-"
+    regex = r"([A-Z]\.?\s*)+-?" 
+    match = re.fullmatch(regex, string)
+    if match != None:
+        # split the string about [^A-Z] into lower case characters
+        split_str = re.split(r'[^A-Z]+', match.group())
+        split_str = ''.join(split_str).strip().lower()
+        # now we have got the letters, just insert spaces in between them
+        out = ""
+        for ch in split_str:
+            out += (ch + " ")
+        return out.strip()
     
-    # split the string about [^A-Z] into lower case characters
-    split_str = re.split(r'[^A-Z]+', match.group())
-    split_str = ''.join(split_str).strip().lower()
-    # now we have got the letters, just insert spaces in between them
-    out = ""
-    for ch in split_str:
-        out += ch
-        out += " "
-    return out.strip()
+    # this allows lower case letters only when '-' present in end like ConnectX-
+    regex = r"([A-Za-z]\.?\s*)+-" 
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return abbreviation(match.group()[:-1].upper())
+
+    # Apostrophes with acronyms and initials -- MEPs, and even considering MEP's
+    regex = r"(([A-Z]\.?\s*)+[A-Z])\'?s"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return abbreviation(match.group(1)) + "'s"
+    
+    # search string (made lower cased) in common abbreviations 
+    if string.lower() in _common_abbreviations:
+        return abbreviation(string.upper())
+
+    return None
 
 def dates2words(string):
     '''
@@ -133,12 +142,6 @@ def dates2words(string):
         January 14, 2008 january fourteenth two thousand eight; May 29, 2013 may twenty ninth twenty thirteen; November 20, 2013; July 2nd, 2014 july second twenty fourteen
         2008-01-08 the eighth of january two thousand eight
     '''
-    # check if it is date or not by checking presence of year | year presence not necessary
-    # regex = r"[1-2]\d{3}"
-    # match = re.search(regex, string)
-    # if match == None:
-    #     return None
-
     # only year
     regex = r"[1-2]\d{3}"
     match = re.fullmatch(regex, string)
@@ -146,7 +149,7 @@ def dates2words(string):
         return _convertyear(match.group()) 
     
     # day_month
-    regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december)"
+    regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december)\.?"
     match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
         return "the " + _number_to_ordinal(match.group(1)) + " of " + match.group(2).lower()
@@ -179,11 +182,17 @@ def dates2words(string):
         return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(4))
 
     # 2008-01-21
-    regex = r"(\d{4})-(\d{2})-(\d{2})"
+    regex = r"([1-2]\d{3})-(\d{2})-(\d{2})"
     match = re.fullmatch(regex, string)
     if match != None:
         return "the " + _number_to_ordinal(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
-    
+
+    # 01-02-2020 January 2nd twenty twenty
+    regex = r"(\d{2})-(\d{2})-([1-2]\d{3})"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(3))
+
     return None
 
 def _convertyear(year):
@@ -595,6 +604,9 @@ def _make_vocab():
     keys = "I II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI XVII XVIII XIX XX XXI XXII XXIII XXIV XXV XXVI XXVII XXVIII XXIX XXX XXXI XXXII XXXIII XXXIV XXXV XXXVI XXXVII XXXVIII XXXIX XL XLI XLII XLIII XLIV XLV XLVI XLVII XLVIII XLIX L LI LII LIII LIV LV LVI LVII LVIII LIX LX LXI LXII LXIII LXIV LXV LXVI LXVII LXVIII LXIX LXX LXXI LXXII LXXIII LXXIV LXXV LXXVI LXXVII LXXVIII LXXIX LXXX LXXXI LXXXII LXXXIII LXXXIV LXXXV LXXXVI LXXXVII LXXXVIII LXXXIX XC XCI XCII XCIII XCIV XCV XCVI XCVII XCVIII XCIX C CI CII CIII CIV CV CVI CVII CVIII CIX CX CXI CXII CXIII CXIV CXV CXVI CXVII CXVIII CXIX CXX CXXI CXXII CXXIII CXXIV CXXV CXXVI CXXVII CXXVIII CXXIX CXXX CXXXI CXXXII CXXXIII CXXXIV CXXXV CXXXVI CXXXVII CXXXVIII CXXXIX CXL CXLI CXLII CXLIII CXLIV CXLV CXLVI CXLVII CXLVIII CXLIX CL".split(' ')
     for i in range(1,151):
         _romans[keys[i-1]] = _number_to_word(str(i))
+    
+    global _common_abbreviations
+    _common_abbreviations = ['tv', 'ie', 'i.e.', 'fyi', 'rsvp', 'faq', 'lol', 'lmao']
 
     # print(_num2word)
     # print(_placeValue)
