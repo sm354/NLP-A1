@@ -298,7 +298,7 @@ def time2words(string):
         else:
             if num3 != "zero":
                 num += ("and " + num3 + " seconds")
-        return num
+        return num.strip()
 
     return None
 
@@ -379,7 +379,8 @@ def num2words(string, hyph_num_allowed = True):
         num2 = num2.split('/')
         num2_a = _number_to_word(num2[0])
         num2_b = _number_to_ordinal(num2[1]) if num2[1] != "4" else "quarter" # 2/4 two quarters
-        num2 = num2_a + " " + num2_b + "s"
+        num2 = num2_a + " " + num2_b 
+        num2 = num2 + "s" if num2_a != "one" else num2
 
         if match.group(2) == "1/2": 
             num2 = "half"
@@ -699,13 +700,13 @@ if __name__ == "__main__":
 
     solution_dump(args)
 
-    # remove the following lines before final submission
-    python_cmd = "python run_checker.py --ground_truth_path assignment_1_data/output.json \
-        --solution_path " + args.solution_path 
-    if args.debug:
-        python_cmd += " --debug"
+    # # remove the following lines before final submission
+    # python_cmd = "python run_checker.py --ground_truth_path assignment_1_data/output.json \
+    #     --solution_path " + args.solution_path 
+    # if args.debug:
+    #     python_cmd += " --debug"
     
-    subprocess.call(python_cmd, shell=True) 
+    # subprocess.call(python_cmd, shell=True) 
 
-    if args.predict != None:
-        print(find_output_token(args.predict))
+    # if args.predict != None:
+    #     print(find_output_token(args.predict))
