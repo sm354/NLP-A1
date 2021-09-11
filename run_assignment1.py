@@ -60,8 +60,14 @@ def solution(input_tokens):
     global rules
     rules = [sil, romans2words, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
 
-    for input_token in input_tokens:
+    for i, input_token in enumerate(input_tokens):
         output_token = find_output_token(input_token)
+        
+        # add "the " to roman numeral if prev token has first letter capital
+        if romans2words(input_token) != None:
+            if i > 0 and (len(input_tokens[i-1]) != 0) and ('A' <= input_tokens[i-1][0] <= 'Z'):
+                output_token = "the " + romans2words(input_token, ordinal = True)
+
         output_tokens.append(output_token)
 
     assert len(output_tokens) == len(input_tokens)
@@ -73,11 +79,11 @@ def find_output_token(inp_tok):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
     for rule in rules:
-        # try:
-        out_tok = rule(inp_tok)
-        # except:
-            # print("error encountered for input token %s in rule %s"%(inp_tok, rule))
-            # return "<self>"
+        try:
+            out_tok = rule(inp_tok)
+        except:
+            print("error encountered for input token %s in rule %s"%(inp_tok, rule))
+            return "<self>"
         if out_tok != None:
             break
     return '<self>' if out_tok == None else out_tok
@@ -87,7 +93,7 @@ def sil(string):
     regex = r"\W"
     return None if re.fullmatch(regex, string) == None else "sil"
 
-def romans2words(string):
+def romans2words(string, ordinal = False):
     '''
     possible cases
     --------------
@@ -96,8 +102,9 @@ def romans2words(string):
     '''
     regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences - I am Shubham, Do I need to do?} --- DIFFICULT TO FIX EVEN BY SEEING NEIGHBOURS
     match = re.fullmatch(regex, string)
-    if match != None and match.group() in _romans.keys():
-        return _romans[match.group()]
+    if match != None and (match.group() in _romans.keys()):
+        num_str = _romans[match.group()]
+        return _number_to_word(num_str) if ordinal == False else _number_to_ordinal(num_str)
     return None
 
 def abbreviation(string):
@@ -635,7 +642,7 @@ def _make_vocab():
     _romans = {}
     keys = "I II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI XVII XVIII XIX XX XXI XXII XXIII XXIV XXV XXVI XXVII XXVIII XXIX XXX XXXI XXXII XXXIII XXXIV XXXV XXXVI XXXVII XXXVIII XXXIX XL XLI XLII XLIII XLIV XLV XLVI XLVII XLVIII XLIX L LI LII LIII LIV LV LVI LVII LVIII LIX LX LXI LXII LXIII LXIV LXV LXVI LXVII LXVIII LXIX LXX LXXI LXXII LXXIII LXXIV LXXV LXXVI LXXVII LXXVIII LXXIX LXXX LXXXI LXXXII LXXXIII LXXXIV LXXXV LXXXVI LXXXVII LXXXVIII LXXXIX XC XCI XCII XCIII XCIV XCV XCVI XCVII XCVIII XCIX C CI CII CIII CIV CV CVI CVII CVIII CIX CX CXI CXII CXIII CXIV CXV CXVI CXVII CXVIII CXIX CXX CXXI CXXII CXXIII CXXIV CXXV CXXVI CXXVII CXXVIII CXXIX CXXX CXXXI CXXXII CXXXIII CXXXIV CXXXV CXXXVI CXXXVII CXXXVIII CXXXIX CXL CXLI CXLII CXLIII CXLIV CXLV CXLVI CXLVII CXLVIII CXLIX CL".split(' ')
     for i in range(1,151):
-        _romans[keys[i-1]] = _number_to_word(str(i))
+        _romans[keys[i-1]] = str(i)
     
     global _common_abbreviations
     _common_abbreviations = ['tv', 'ie', 'i.e.', 'fyi', 'rsvp', 'faq', 'lol', 'lmao']
