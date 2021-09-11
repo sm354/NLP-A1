@@ -28,6 +28,7 @@ def add_args(parser):
     parser.add_argument('--input_path', default='assignment_1_data/input.json', type=str, help='Path to input file')
     parser.add_argument('--solution_path', default='assignment_1_data/prediction.json', type=str, help='Path to solution file')
     parser.add_argument('--debug', action='store_true', help='print the wrong predictions along with input and gold output')
+    parser.add_argument('--predict', type=str, help='print the output token for given input token')
     return parser
 
 # make solution using input sentences
@@ -56,10 +57,11 @@ def solution(input_tokens):
 
     # define the rules for the patterns observed in the given data
     # this order also denotes the priority given i.e. higher to lower priority as we move from left to right ||| important, for ex., when token is year (2012) and not number
+    global rules
     rules = [sil, romans2words, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
 
     for input_token in input_tokens:
-        output_token = find_output_token(input_token, rules)
+        output_token = find_output_token(input_token)
         output_tokens.append(output_token)
 
     assert len(output_tokens) == len(input_tokens)
@@ -67,7 +69,7 @@ def solution(input_tokens):
     return output_tokens
 
 # rule-based system for converting each input-token (in a sentence/input tokens)
-def find_output_token(inp_tok, rules):
+def find_output_token(inp_tok):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
     for rule in rules:
@@ -652,3 +654,6 @@ if __name__ == "__main__":
         python_cmd += " --debug"
     
     subprocess.call(python_cmd, shell=True) 
+
+    if args.predict != None:
+        print(find_output_token(args.predict))
