@@ -15,14 +15,11 @@ Rule-based system
 import argparse
 import json
 import re
-import subprocess # remove this line before final submission
-import ipdb # remove this line before final submission
 
 # parse arguments
 def add_args(parser):
     parser.add_argument('--input_path', default='assignment_1_data/input.json', type=str, help='Path to input file')
     parser.add_argument('--solution_path', default='assignment_1_data/prediction.json', type=str, help='Path to solution file')
-    parser.add_argument('--debug', action='store_true', help='print the wrong predictions along with input and gold output')
     parser.add_argument('--predict', type=str, help='print the output token for given input token')
     return parser
 
@@ -700,13 +697,5 @@ if __name__ == "__main__":
 
     solution_dump(args)
 
-    # # remove the following lines before final submission
-    # python_cmd = "python run_checker.py --ground_truth_path assignment_1_data/output.json \
-    #     --solution_path " + args.solution_path 
-    # if args.debug:
-    #     python_cmd += " --debug"
-    
-    # subprocess.call(python_cmd, shell=True) 
-
-    # if args.predict != None:
-    #     print(find_output_token(args.predict))
+    if args.predict != None:
+        print(find_output_token(args.predict))
