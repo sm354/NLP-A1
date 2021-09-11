@@ -1,0 +1,17 @@
+COL772 Assignment 1 - by Shubham Mittal 2018EE10957
+---------------------------------------------------
+
+Disclaimer
+----------
+I have had discussions with the following students registered in the course (keeping the academic integrity guidelines into account)
+1. Harman Singh 2018EE10542
+2. Aditi Khandelwal 2018EE10434
+
+References
+----------
+To create _romans dictionary
+    https://www.math-salamanders.com/roman-numerals-list.html
+
+To create apostrophes in abbreviations
+    https://www.port.ac.uk/student-life/help-and-advice/study-skills/written-assignments/acronyms-and-initials-apostrophes-and-plurals
+    https://reallifeglobal.com/acronyms/
