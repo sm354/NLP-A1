@@ -522,14 +522,14 @@ def units2words(string):
         100Gb/s one hundred gigabits per second
         179.4/km2 one hundred seventy nine point four per square kilometers
     '''
-    regex = r"-?(\d+,?)+\.?\d*\s*/?(((%s)(²|2)?/?)+)"%('|'.join(list(_units.keys())))
+    regex = r"(-?(\d+,?)+\.?\d*)\s*/?((%s)(²|2)?/?)+"%('|'.join(list(_units.keys())))
     match = re.fullmatch(regex, string)
     if match != None:
         regex_units = r"/?((%s)(²|2)?/?)+"%('|'.join(list(_units.keys())))
         match = re.search(regex_units, string)
         # get the number
         num = string[:match.start()].strip()
-        num = num2words(num, hyph_num_allowed = False)
+        num = num2words(num, hyph_num_allowed = False) # once we have found that the string has units, then abbreviated nums are disallowed
 
         # now see the characters like '/', '²', and units
         num_2 = []
@@ -558,10 +558,13 @@ def currency2words(string):
         $10,000 ten thousand dollars; $10 million ten million dollars; $7M seven million dollars
         £50,000 fifty thousand pounds; £500m five hundred million pounds; £300 million three hundred million pounds
     '''
-    regex = r"(Rs|€|\$|£)?\s?(((\d+,?)+)\.?\d*)\s*(cr|million|M|m)?"
-    match = re.fullmatch(regex, string)
+    regex = r"(rs\.?|€|\$|£)?\s?(((\d+,?)+)\.?\d*)\s*(%s)?"%('|'.join(list(_amounts.keys())))
+    match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
-        currency = _currencies[match.group(1)] if match.group(1) != None else None
+        currency = None
+        if match.group(1) != None:
+            curr_match = re.search(r"(rs|€|\$|£)", match.group(1), re.IGNORECASE)
+            currency = _currencies[curr_match.group().lower()]
         num = num2words(match.group(2), hyph_num_allowed = False)
 
         if match.group(5) != None:
@@ -616,7 +619,7 @@ def _make_vocab():
 
     global _currencies
     _currencies = {}
-    keys = ['₹', 'Rs', '€', '$', '£']
+    keys = ['₹', 'rs', '€', '$', '£']
     values = ['rupees', 'rupees', 'euros', 'dollars', 'pounds']
     for k,v in zip(keys, values):
         _currencies[k] = v
