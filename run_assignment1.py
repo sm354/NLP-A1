@@ -568,6 +568,27 @@ def currency2words(string):
     regex = r"(rs\.?|€|\$|£)?\s?(((\d+,?)+)\.?\d*)\s*(%s)?"%('|'.join(list(_amounts.keys())))
     match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None:
+        # rupees - paisa, paise; euros, dollars - cents, cent; pound - penny, pence
+        if match.group(1) != None and match.group(5) == None and ("." in match.group(2)):
+            curr_match = re.search(r"(rs|€|\$|£)", match.group(1), re.IGNORECASE)
+            currency = _currencies[curr_match.group().lower()]
+            
+            two_parts = match.group(2).split('.')
+            num_1 = num2words(two_parts[0], hyph_num_allowed = False) #+ " " + currency 
+            num_2 = two_parts[1]
+            if num_2 == "":
+                num_2 = _number_to_word("0")
+            elif len(num_2) == 1:
+                num_2 = _number_to_word(num_2 + "0")
+            else:
+                num_2 = _number_to_word(num_2)
+
+            # now merge the numbers
+            num_1 = num_1 + " " + currency[:-1] if num_1 == "one" else num_1 + " " + currency
+            num = num_1 + " and " + num_2 + " "
+            num = num + _currency_map[currency][0] if num_2 == "one" else num + _currency_map[currency][1]            
+            return num
+
         currency = None
         if match.group(1) != None:
             curr_match = re.search(r"(rs|€|\$|£)", match.group(1), re.IGNORECASE)
@@ -653,6 +674,14 @@ def _make_vocab():
     
     global _common_abbreviations
     _common_abbreviations = ['tv', 'ie', 'i.e.', 'fyi', 'rsvp', 'faq', 'lol', 'lmao']
+
+    global _currency_map
+    _currency_map = {
+        'rupees' : ['paisa', 'paise'],
+        'euros' : ['cent', 'cents'],
+        'dollars' : ['cent', 'cents'],
+        'pounds' : ['penny', 'pence']
+    }
 
     # print(_num2word)
     # print(_placeValue)
