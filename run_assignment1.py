@@ -3,7 +3,6 @@ COL772 A1 - Shubham Mittal 2018EE10957
 
 Rule-based system
 -----------------
-
     How to make such a system?
     --------------------------
         find out the categories that need conversion
@@ -11,10 +10,6 @@ Rule-based system
         write the rule corresponding to the pattern
 
     rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words, difficultAbbreviations]
-    -----
-    silent tokens (sil)
-
-    converting honorifics - Mr Mrs Dr ? probably NO
 '''
 
 import argparse
@@ -64,8 +59,12 @@ def solution(input_tokens):
         output_token = find_output_token(input_token)
         
         # add "the " to roman numeral if prev token has first letter capital
-        if romans2words(input_token) != None:
-            if i > 0 and (len(input_tokens[i-1]) != 0) and ('A' <= input_tokens[i-1][0] <= 'Z'):
+        # we can check this rule separately without compromising on priority order 
+        # as before this only sil is rule is present
+        if romans2words(input_token) != None: 
+            if input_token == "I":
+                output_token = "<self>"
+            elif i > 0 and (len(input_tokens[i-1]) != 0) and ('A' <= input_tokens[i-1][0] <= 'Z'):
                 output_token = "the " + romans2words(input_token, ordinal = True)
 
         output_tokens.append(output_token)
@@ -82,7 +81,7 @@ def find_output_token(inp_tok):
         try:
             out_tok = rule(inp_tok)
         except:
-            print("error encountered for input token %s in rule %s"%(inp_tok, rule))
+            print("error encountered for input token: <%s> in rule <%s>"%(inp_tok, rule))
             return "<self>"
         if out_tok != None:
             break
@@ -100,7 +99,7 @@ def romans2words(string, ordinal = False):
         Chapter IV : <self> four; 'topoisomerase', 'II', 'in' : 'two', '<self>', '<self>'; 
         'Lincoln', 'Mark', 'VII', 'luxury' : '<self>', 'seven', '<self>';
     '''
-    regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences - I am Shubham, Do I need to do?} --- DIFFICULT TO FIX EVEN BY SEEING NEIGHBOURS
+    regex = r"[IVXLCDM]+" # this includes nouns also {"I" in sentences - I am Shubham, Do I need to do?} --- hard-coded to output <self>
     match = re.fullmatch(regex, string)
     if match != None and (match.group() in _romans.keys()):
         num_str = _romans[match.group()]
@@ -255,13 +254,13 @@ def time2words(string):
     match = re.fullmatch(regex, string)
     if match != None:
         num = None
-        if match.group(3) != None:
+        if match.group(3) != None and (0 <= int(match.group(1)) <= 12) and (0 <= int(match.group(2)) <= 59):
             num1 = _number_to_word(match.group(1).strip())
             num2 = _number_to_word(match.group(2).strip()) 
             num1 = num1 + " " + num2 if num2 != "zero" else num1
             num1+= (" " + abbreviation(match.group(3).strip().upper())) # pass upper case PM, AM, P.M., etc to abbreviation
             num = num1
-        else:
+        elif (0 <= int(match.group(1)) <= 23) and (0 <= int(match.group(2)) <= 59):
             num1 = _number_to_word(match.group(1).strip())
             num2 = _number_to_word(match.group(2).strip())         
             if num1 == "zero" and num2 != "zero":
@@ -275,13 +274,13 @@ def time2words(string):
     # edge case - 9 am, 12 pm, etc == the ones without ":"
     regex = r"(\d{1,2})\s+([PpAa]\.?[Mm]\.?)" # allowing too many white space as such errors may come in data
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (0 <= int(match.group(1)) <= 12):
         return _number_to_word(match.group(1).strip()) + " " + abbreviation(match.group(2).strip().upper())
         
     # Time format
     regex = r"(\s*\d{1,2}\s*):(\s*\d{1,2}\s*):(\s*\d{1,2}\s*)" # allowing too many white space as such errors may come in data
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (0 <= int(match.group(1)) <= 23) and (0 <= int(match.group(2)) <= 59) and (0 <= int(match.group(3)) <= 59):
         num = ""
         num1 = _number_to_word(match.group(1).strip())
         num2 = _number_to_word(match.group(2).strip()) 
