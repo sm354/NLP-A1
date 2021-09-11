@@ -168,7 +168,7 @@ def dates2words(string):
         return num
     
     # day_month
-    regex = r"(\d{1,2})\s*(january|february|march|april|may|june|july|august|september|october|november|december)\.?"
+    regex = r"(\d{1,2})\s*(january|february|march|april|may|june|july|august|september|october|november|december)"
     match = re.fullmatch(regex, string, re.IGNORECASE)
     if match != None and (1 <= int(match.group(1)) <= 31):
         return "the " + _number_to_ordinal(match.group(1)) + " of " + match.group(2).lower()
