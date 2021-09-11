@@ -222,7 +222,7 @@ def _convertyear(year):
     if int(year)%1000 == 0:
         return _number_to_word(year[0]) + " thousand"
     
-    if 2000 < int(year) < 2009:
+    if 2000 < int(year) <= 2009:
         return "two thousand " + _number_to_word(year[-1])
     
     if 2010 <= int(year) < 2100:
