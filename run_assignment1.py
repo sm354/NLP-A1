@@ -10,7 +10,7 @@ Rule-based system
         analyse the pattern by training the human neural network with some examples from given dataset
         write the rule corresponding to the pattern
 
-    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
+    rules = [sil, abbreviation, dates2words, time2words, num2words, units2words, currency2words, difficultAbbreviations]
     -----
     silent tokens (sil)
 
@@ -58,7 +58,7 @@ def solution(input_tokens):
     # define the rules for the patterns observed in the given data
     # this order also denotes the priority given i.e. higher to lower priority as we move from left to right ||| important, for ex., when token is year (2012) and not number
     global rules
-    rules = [sil, romans2words, abbreviation, dates2words, time2words, num2words, units2words, currency2words]
+    rules = [sil, romans2words, abbreviation, dates2words, time2words, num2words, units2words, currency2words, difficultAbbreviations]
 
     for i, input_token in enumerate(input_tokens):
         output_token = find_output_token(input_token)
@@ -267,7 +267,7 @@ def time2words(string):
             if num1 == "zero" and num2 != "zero":
                 num = num1 + " " + num2
             elif num2 == "zero":
-                num = num1 + " o'clock" if 0 < int(match.group(1).strip()) < 12 else num1 + " hundred"
+                num = num1 + " o'clock" if 0 < int(match.group(1).strip()) <= 12 else num1 + " hundred"
             else:
                 num = num1 + " " + num2
         return num + " " + abbreviation(match.group(4).strip().upper()) if match.group(4) != None else num
@@ -579,6 +579,13 @@ def currency2words(string):
         
         num = num + " " + currency if currency != None else num
     return num if match != None else None
+
+def difficultAbbreviations(string):
+    regex = r"[A-Z]{3,}([a-z]\.?\s?)+"
+    match = re.fullmatch(regex, string)
+    if match != None:
+        return abbreviation(match.group().upper())
+    return None
 
 def _make_vocab():
     # make dictionaries for hard-coded mappings like '1' -> 'one'
