@@ -73,11 +73,11 @@ def find_output_token(inp_tok):
     # if any of the rules doesn't apply then apply <self> token
     out_tok = '<self>'
     for rule in rules:
-        try:
-            out_tok = rule(inp_tok)
-        except:
-            print("error encountered for input token %s in rule %s"%(inp_tok, rule))
-            return "<self>"
+        # try:
+        out_tok = rule(inp_tok)
+        # except:
+            # print("error encountered for input token %s in rule %s"%(inp_tok, rule))
+            # return "<self>"
         if out_tok != None:
             break
     return '<self>' if out_tok == None else out_tok
@@ -144,68 +144,69 @@ def dates2words(string):
         14 May the fourteenth of may
         August 17 august seventeenth
         March 2011 march twenty eleven; September 2008 september two thousand eight
+        2006-07 -> sid 8 seems wrong but this format can occur
         14 June 2014 the fourteenth of june twenty fourteen
         January 14, 2008 january fourteenth two thousand eight; May 29, 2013 may twenty ninth twenty thirteen; November 20, 2013; July 2nd, 2014 july second twenty fourteen
-        2008-01-08 the eighth of january two thousand eight
+        2008-01-08 the eighth of january two thousand eight; # 01-02-2020 January 2nd twenty twenty
         decades 1940s
     '''
     # only year
     regex = r"[1-2]\d{3}"
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (int(match.group()) < 2100):
         return _convertyear(match.group())
 
     # only year + "s"
     regex = r"[1-2]\d{2}0s"
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (int(match.group()[:-1]) < 2100):
         num = _convertyear(match.group()[:-1])
         num = num + "s" if num[-1] != 'y' else num[:-1] + "ies"
         return num
     
     # day_month
-    regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december)\.?"
+    regex = r"(\d{1,2})\s*(january|february|march|april|may|june|july|august|september|october|november|december)\.?"
     match = re.fullmatch(regex, string, re.IGNORECASE)
-    if match != None:
+    if match != None and (1 <= int(match.group(1)) <= 31):
         return "the " + _number_to_ordinal(match.group(1)) + " of " + match.group(2).lower()
 
     # month_day
-    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) (\d{1,2})(st|nd|rd|th)?"
+    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{1,2})(st|nd|rd|th)?"
     match = re.fullmatch(regex, string, re.IGNORECASE)
-    if match != None:
+    if match != None and (1 <= int(match.group(2)) <= 31):
         return match.group(1).lower() + " " + _number_to_ordinal(match.group(2))
 
     # month_year
     # regex = r"([A-Za-z]+) ([1-2]\d{3})"
-    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) ([1-2]\d{3})"
+    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december)\s*([1-2]\d{3})"
     match = re.fullmatch(regex, string, re.IGNORECASE)
-    if match != None:
+    if match != None and (int(match.group(2)) < 2100):
         return match.group(1).lower() + " " + _convertyear(match.group(2))
     
     # day_month_year
     # regex = r"(\d{1,2}) ([A-Za-z]+) ([1-2]\d{3})"
-    regex = r"(\d{1,2}) (january|february|march|april|may|june|july|august|september|october|november|december) ([1-2]\d{3})"
+    regex = r"(\d{1,2})\s*(january|february|march|april|may|june|july|august|september|october|november|december)\s*([1-2]\d{3})"
     match = re.fullmatch(regex, string, re.IGNORECASE)
-    if match != None:
+    if match != None and (1 <= int(match.group(1)) <= 31) and (int(match.group(3)) < 2100):
         return "the " + _number_to_ordinal(match.group(1)) + " of " + match.group(2).lower() + " " + _convertyear(match.group(3))
     
     # month_day_year
     # regex = r"([A-Za-z]+) (\d{1,2}),? ([1-2]\d{3})"
-    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december) (\d{1,2})(st|nd|rd|th)?,? ([1-2]\d{3})"
+    regex = r"(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{1,2})(st|nd|rd|th)?,?\s+([1-2]\d{3})"
     match = re.fullmatch(regex, string, re.IGNORECASE)
-    if match != None:
+    if match != None and (1 <= int(match.group(2)) <= 31) and (int(match.group(4)) < 2100):
         return match.group(1).lower() + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(4))
 
     # 2008-01-21
     regex = r"([1-2]\d{3})-(\d{1,2})-(\d{1,2})"
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (int(match.group(1)) < 2100) and (1 <= int(match.group(2)) <= 12) and (1 <= int(match.group(3)) <= 31):
         return "the " + _number_to_ordinal(match.group(3)) + " of " + _months[int(match.group(2))] + " " + _convertyear(match.group(1))
 
     # 01-02-2020 January 2nd twenty twenty
     regex = r"(\d{1,2})-(\d{1,2})-([1-2]\d{3})"
     match = re.fullmatch(regex, string)
-    if match != None:
+    if match != None and (1 <= int(match.group(1)) <= 12) and (1 <= int(match.group(2)) <= 31) and (int(match.group(3)) < 2100):
         return _months[int(match.group(1))] + " " + _number_to_ordinal(match.group(2)) + " " + _convertyear(match.group(3))
 
     return None
@@ -295,7 +296,7 @@ def time2words(string):
 
     return None
 
-def num2words(string):
+def num2words(string, hyph_num_allowed = True):
     '''
     possible formats
     ----------------
@@ -311,7 +312,7 @@ def num2words(string):
             25.520 twenty five point five two o
             13.0088 thirteen point o o eight eight
             102.1 one hundred two point one
-            NOT considering cases like .12%, .12 etc
+            considering cases like .12%, .12 etc
         frac_num    
             7/283 : seven two hundred eighty thirds
             -3/5 minus three fifths
@@ -320,14 +321,14 @@ def num2words(string):
             2/4 two quarters
         hyp_num
             978-0-304-35252-4 nine seven eight sil o sil three o four sil three five two five two sil four
-            1-881089-97-5 one sil eight eight one o eight nine sil nine seven sil five
             0-8387-1972-4 o sil eight three eight seven sil one nine seven two sil four
+            106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
+            3 9806773 4 6 three sil nine eight o six seven seven three sil four sil six
+            0 7506 0625 8 o sil seven five o six sil o six two five sil eight
+            2009-09-10 03 two o o nine sil o nine sil one o sil o three
+            0252076729 o two five two o seven six seven two nine
         ordinals 
             1st, 2nd, etc
-        
-        EDGE-CASE:
-            106 (2003) 203-214 one o six sil two o o three sil two o three sil two one four
-            0 7506 0625 8 o sil seven five o six sil o six two five sil eight
     '''
     regex = r"(-?(\d+,?)+\.?\d*\s*)(%|pc|percent|percentage)?" # regex for num, comma_num, dec_perc_num
     match = re.fullmatch(regex, string)
@@ -341,10 +342,19 @@ def num2words(string):
         # check decimal
         num_string = num_string.split('.')
         if len(num_string) == 1: # no decimal
+            if hyph_num_allowed and ((len(num_string[0]) > 2 and num_string[0][0] == "0") or (len(num_string[0]) > 3 and num_string[0][0:2] == "-0")):
+                return _hyphen_num_to_word(string) # pass this string to _hyphen_num_to_word
+            
             num_string = _number_to_word(num_string[0])
-        else:
-            num1 = _number_to_word(num_string[0])
-            num1 += " point"
+        else: # decimal
+            if num_string[0] == "" or num_string[0] == "-": # considering cases like .12%, .12 etc
+                num1 = "point" if num_string[0] == "" else "minus point"
+            elif hyph_num_allowed and ( (len(num_string[0]) > 1 and num_string[0][0] == "0") or (len(num_string[0]) > 2 and num_string[0][0:2] == "-0") ):
+                return _hyphen_num_to_word(string) # pass this string to _hyphen_num_to_word
+            
+            else:
+                num1 = _number_to_word(num_string[0])
+                num1 += " point"
             num2 = num_string[1]
             if len(num2) != 0 and int(num2) == 0:
                 num_0s = ['zero']*len(num2)
@@ -376,10 +386,10 @@ def num2words(string):
 
         return num2
 
-    regex_hyp_num = r"(\d[\(\)\s-]*)+" # this includes dates also -- But dates2word given higher priority so this is taken into consideration
+    regex_hyp_num = r"(\d\W*)+" # this includes dates also -- But dates2word given higher priority so this is taken into consideration
     match = re.fullmatch(regex_hyp_num, string)
     if match != None:
-        return _hyphen_num_to_word(match.group())
+        return _hyphen_num_to_word(match.group().strip()) # removing trailing white spaces as anyway they are unnecessary
 
     regex_ordinals = r"(\d+)(st|nd|rd|th)"
     match = re.fullmatch(regex_ordinals, string)
@@ -486,15 +496,15 @@ def _3dig_num2wrd(num):
 
 def _hyphen_num_to_word(hyph_num):
     final_word = []
-    # # if there are characters other than digits and \s then tag them as sil and ignore \s if present
-    # # else tag \s as sil
-    # if re.search(r"[^\d\s]", hyph_num) != None:
-    #     hyph_num = ''.join(hyph_num.split(' '))
-    for ch in hyph_num:
+    # if there are \s in hyph_num then tag them as sil only when it is surrounded by \d on both sides otherwise skip it
+    for idx, ch in enumerate(hyph_num):
         if '0' < ch <= '9':
             final_word.append(_num2word[int(ch)])
         elif ch == '0':
             final_word.append('o')
+        elif ch == ' ':
+            if (idx>0 and '0' <= hyph_num[idx-1] <= '9') and (idx<len(hyph_num)-1 and '0' <= hyph_num[idx+1] <= '9'):
+                final_word.append('sil')
         else:
             final_word.append('sil')
     return ' '.join(final_word)
@@ -519,10 +529,7 @@ def units2words(string):
         match = re.search(regex_units, string)
         # get the number
         num = string[:match.start()].strip()
-        num = num2words(num)
-
-        if num == None:
-            print(string + "|" + string[:match.start()].strip())
+        num = num2words(num, hyph_num_allowed = False)
 
         # now see the characters like '/', '²', and units
         num_2 = []
@@ -555,7 +562,7 @@ def currency2words(string):
     match = re.fullmatch(regex, string)
     if match != None:
         currency = _currencies[match.group(1)] if match.group(1) != None else None
-        num = num2words(match.group(2))
+        num = num2words(match.group(2), hyph_num_allowed = False)
 
         if match.group(5) != None:
             num += (" " + _amounts[match.group(5).lower()])    
@@ -609,8 +616,8 @@ def _make_vocab():
 
     global _currencies
     _currencies = {}
-    keys = ['Rs', '€', '$', '£']
-    values = ['rupees', 'euros', 'dollars', 'pounds']
+    keys = ['₹', 'Rs', '€', '$', '£']
+    values = ['rupees', 'rupees', 'euros', 'dollars', 'pounds']
     for k,v in zip(keys, values):
         _currencies[k] = v
     
