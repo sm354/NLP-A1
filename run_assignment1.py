@@ -360,18 +360,21 @@ def num2words(string):
         num2 = match.group(2)
         num2 = num2.split('/')
         num2_a = _number_to_word(num2[0])
-        num2_b = _number_to_ordinal(num2[1])
+        num2_b = _number_to_ordinal(num2[1]) if num2[1] != "4" else "quarter" # 2/4 two quarters
         num2 = num2_a + " " + num2_b + "s"
+
+        if match.group(2) == "1/2": 
+            num2 = "half"
         
         # check if the first num is present or not
         if match.group(1) != None:
             num1 = ''.join(re.split(r"\s+", match.group(1)))
             num1 = _number_to_word(num1)
-            num2 = num1 + " and " + num2
+            num2 = num1 + " and " + num2 if num2 != "half" else num1 + " and a " + num2
 
         return num2
 
-    regex_hyp_num = r"(\d[\(\)\s-]?)+" # this includes dates also -- But dates2word given higher priority so this is taken into consideration
+    regex_hyp_num = r"(\d[\(\)\s-]*)+" # this includes dates also -- But dates2word given higher priority so this is taken into consideration
     match = re.fullmatch(regex_hyp_num, string)
     if match != None:
         return _hyphen_num_to_word(match.group())
@@ -481,6 +484,10 @@ def _3dig_num2wrd(num):
 
 def _hyphen_num_to_word(hyph_num):
     final_word = []
+    # # if there are characters other than digits and \s then tag them as sil and ignore \s if present
+    # # else tag \s as sil
+    # if re.search(r"[^\d\s]", hyph_num) != None:
+    #     hyph_num = ''.join(hyph_num.split(' '))
     for ch in hyph_num:
         if '0' < ch <= '9':
             final_word.append(_num2word[int(ch)])
@@ -501,11 +508,12 @@ def units2words(string):
         11 cm eleven centimeters
         823.06 KB eight hundred twenty three point o six kilobytes
         100Gb/s one hundred gigabits per second
+        179.4/km2 one hundred seventy nine point four per square kilometers
     '''
-    regex = r"(-?)(((\d+)(,?))+)(\.?)(\d*)(\s*)(/?)(((%s)(²?)(/?))+)"%('|'.join(list(_units.keys())))
+    regex = r"-?(\d+,?)+\.?\d*\s*/?(((%s)(²|2)?/?)+)"%('|'.join(list(_units.keys())))
     match = re.fullmatch(regex, string)
     if match != None:
-        regex_units = r"(/?)(((%s)(²?)(/?))+)"%('|'.join(list(_units.keys())))
+        regex_units = r"/?((%s)(²|2)?/?)+"%('|'.join(list(_units.keys())))
         match = re.search(regex_units, string)
         # get the number
         num = string[:match.start()].strip()
@@ -521,7 +529,7 @@ def units2words(string):
             if unit_string[0] == '/':
                 num_2.append('per')
                 unit_string = unit_string[1:]
-            elif unit_string[0] == '²':
+            elif unit_string[0] == '²' or unit_string[0] == "2":
                 num_2.insert(-1, 'square')
                 unit_string = unit_string[1:]
             else:
