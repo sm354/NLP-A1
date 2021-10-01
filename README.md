@@ -12,6 +12,10 @@ A rule-based NLP engine is designed for converting written text to spoken text. 
 4. Currency is also spelled out. “$15.24” is converted to “fifteen dollars and twenty four cents”.
    “£11” is converted to “eleven pounds”.
 
+### Takeaways
+
+Mechanism to analyse and/or annotate data using regular expressions.
+
 ## Running Mode
 
 Predictions
